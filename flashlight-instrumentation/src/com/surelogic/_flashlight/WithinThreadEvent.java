@@ -8,56 +8,56 @@ package com.surelogic._flashlight;
  * Intended to be subclassed for each specific type of event that can occur.
  */
 abstract class WithinThreadEvent extends ProgramEvent {
-    /*
-     * private static final ThreadLocal<ThreadPhantomReference> f_threads = new
-     * ThreadLocal<ThreadPhantomReference>() {
-     * 
-     * @Override protected ThreadPhantomReference initialValue() { return
-     * Phantom.ofThread(Thread.currentThread()); } };
-     */
+  /*
+   * private static final ThreadLocal<ThreadPhantomReference> f_threads = new
+   * ThreadLocal<ThreadPhantomReference>() {
+   * 
+   * @Override protected ThreadPhantomReference initialValue() { return
+   * Phantom.ofThread(Thread.currentThread()); } };
+   */
 
-    /**
-     * The value of <code>System.nanoTime()</code> when this event was
-     * constructed.
-     */
-    private final long f_nanoTime = System.nanoTime();
+  /**
+   * The value of <code>System.nanoTime()</code> when this event was
+   * constructed.
+   */
+  private final long f_nanoTime = System.nanoTime();
 
-    long getNanoTime() {
-        return f_nanoTime;
-    }
+  long getNanoTime() {
+    return f_nanoTime;
+  }
 
-    protected final void addNanoTime(final StringBuilder b) {
-        Entities.addAttribute("nano-time", getNanoTime(), b);
-    }
+  protected final void addNanoTime(final StringBuilder b) {
+    Entities.addAttribute("nano-time", getNanoTime(), b);
+  }
 
-    /**
-     * An identity for the thread this event occurred within.
-     */
-    private final ThreadPhantomReference f_withinThread;// = f_threads.get();
+  /**
+   * An identity for the thread this event occurred within.
+   */
+  private final ThreadPhantomReference f_withinThread;// = f_threads.get();
 
-    // private final ThreadPhantomReference f_withinThread =
-    // Phantom.ofThread(Thread.currentThread());
+  // private final ThreadPhantomReference f_withinThread =
+  // Phantom.ofThread(Thread.currentThread());
 
-    IdPhantomReference getWithinThread() {
-        return f_withinThread;
-    }
+  IdPhantomReference getWithinThread() {
+    return f_withinThread;
+  }
 
-    WithinThreadEvent(ThreadPhantomReference thread) {
-        f_withinThread = thread;
-    }
+  WithinThreadEvent(ThreadPhantomReference thread) {
+    f_withinThread = thread;
+  }
 
-    protected void addThread(final StringBuilder b) {
-        Entities.addAttribute("thread", f_withinThread.getId(), b);
-    }
+  protected void addThread(final StringBuilder b) {
+    Entities.addAttribute("thread", f_withinThread.getId(), b);
+  }
 
-    @Override
-    boolean isTimedEvent() {
-        return true;
-    }
+  @Override
+  boolean isTimedEvent() {
+    return true;
+  }
 
-    @Override
-    long getTime() {
-        return f_nanoTime;
-    }
+  @Override
+  long getTime() {
+    return f_nanoTime;
+  }
 
 }

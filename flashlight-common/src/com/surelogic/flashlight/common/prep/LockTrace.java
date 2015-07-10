@@ -7,9 +7,6 @@ import com.surelogic.flashlight.common.LockType;
 
 /**
  * Represents a lock trace in a tree of lock traces.
- * 
- * @author nathan
- * 
  */
 class LockTrace {
   final long id;

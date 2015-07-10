@@ -18,90 +18,86 @@ import com.surelogic.common.logging.SLLogger;
 
 public abstract class ReferenceDefinition extends RangedEvent {
 
-	private static final String f_psQ = "INSERT INTO OBJECT (Id,Type,Threadname,PackageName,ClassName,Flag) VALUES (?, ?, ?, ?, ?, ?)";
+  private static final String f_psQ = "INSERT INTO OBJECT (Id,Type,Threadname,PackageName,ClassName,Flag) VALUES (?, ?, ?, ?, ?, ?)";
 
-	private PreparedStatement f_ps;
+  private PreparedStatement f_ps;
 
-	private int count;
+  private int count;
 
-	@Override
-  public final void parse(final PreppedAttributes attributes)
-			throws SQLException {
-		final long id = attributes.getLong(ID);
-		long type = attributes.getLong(TYPE);
-		final String threadName = attributes.getString(THREAD_NAME);
-		String className = attributes.getString(CLASS_NAME);
-		if (id == ILLEGAL_ID) {
-			SLLogger.getLogger().log(Level.SEVERE,
-					"Missing id in " + getXMLElementName());
-			return;
-		}
-		if (type == ILLEGAL_ID) {
-			type = id;
-		}
-		String packageName = null;
-		if (className != null) {
-			final int lastDot = className.lastIndexOf('.');
-			if (lastDot == -1) {
-				packageName = "(default)";
-			} else {
-				packageName = className.substring(0, lastDot);
-				className = className.substring(lastDot + 1);
-			}
-		}
-		insert(id, type, threadName, packageName, className);
-	}
+  @Override
+  public final void parse(final PreppedAttributes attributes) throws SQLException {
+    final long id = attributes.getLong(ID);
+    long type = attributes.getLong(TYPE);
+    final String threadName = attributes.getString(THREAD_NAME);
+    String className = attributes.getString(CLASS_NAME);
+    if (id == ILLEGAL_ID) {
+      SLLogger.getLogger().log(Level.SEVERE, "Missing id in " + getXMLElementName());
+      return;
+    }
+    if (type == ILLEGAL_ID) {
+      type = id;
+    }
+    String packageName = null;
+    if (className != null) {
+      final int lastDot = className.lastIndexOf('.');
+      if (lastDot == -1) {
+        packageName = "(default)";
+      } else {
+        packageName = className.substring(0, lastDot);
+        className = className.substring(lastDot + 1);
+      }
+    }
+    insert(id, type, threadName, packageName, className);
+  }
 
-	private void insert(final long id, final long type,
-			final String threadName, final String packageName,
-			final String className) throws SQLException {
-		if (f_scanResults.couldBeReferencedObject(id)) {
-			int idx = 1;
-			f_ps.setLong(idx++, id);
-			f_ps.setLong(idx++, type);
-			if (threadName != null) {
-				f_ps.setString(idx++, threadName);
-			} else {
-				f_ps.setNull(idx++, Types.VARCHAR);
-			}
-			if (className != null) {
-				f_ps.setString(idx++, packageName);
-				f_ps.setString(idx++, className);
-			} else {
-				f_ps.setNull(idx++, Types.VARCHAR);
-				f_ps.setNull(idx++, Types.VARCHAR);
-			}
-			f_ps.setString(idx++, getFlag());
-			f_ps.addBatch();
-			if (++count == 10000) {
-				f_ps.executeBatch();
-				count = 0;
-			}
-		}
-	}
+  private void insert(final long id, final long type, final String threadName, final String packageName, final String className)
+      throws SQLException {
+    if (f_scanResults.couldBeReferencedObject(id)) {
+      int idx = 1;
+      f_ps.setLong(idx++, id);
+      f_ps.setLong(idx++, type);
+      if (threadName != null) {
+        f_ps.setString(idx++, threadName);
+      } else {
+        f_ps.setNull(idx++, Types.VARCHAR);
+      }
+      if (className != null) {
+        f_ps.setString(idx++, packageName);
+        f_ps.setString(idx++, className);
+      } else {
+        f_ps.setNull(idx++, Types.VARCHAR);
+        f_ps.setNull(idx++, Types.VARCHAR);
+      }
+      f_ps.setString(idx++, getFlag());
+      f_ps.addBatch();
+      if (++count == 10000) {
+        f_ps.executeBatch();
+        count = 0;
+      }
+    }
+  }
 
-	protected abstract String getFlag();
+  protected abstract String getFlag();
 
-	@Override
-	public void setup(final Connection c, final Timestamp start,
-			final long startNS, final ScanRawFileFieldsPreScan scanResults,
-			final long begin, final long end) throws SQLException {
-		super.setup(c, start, startNS, scanResults, begin, end);
-		f_ps = c.prepareStatement(f_psQ);
-	}
+  @Override
+  public void setup(final Connection c, final Timestamp start, final long startNS, final ScanRawFileFieldsPreScan scanResults,
+      final long begin, final long end) throws SQLException {
+    super.setup(c, start, startNS, scanResults, begin, end);
+    f_ps = c.prepareStatement(f_psQ);
+  }
 
-	@Override
+  @Override
   public void flush(final long endTime) throws SQLException {
-		if (count > 0) {
-			f_ps.executeBatch();
-		}
-		count = 0;
-		f_ps.close();
-	}
+    if (count > 0) {
+      f_ps.executeBatch();
+    }
+    count = 0;
+    f_ps.close();
+  }
 
-	@Override
+  @Override
   public void printStats() {
 
-	}
+  }
 
 }

@@ -5,14 +5,11 @@ package com.surelogic._flashlight;
  * instrumentation jars. During the instrumentation phase, this class is
  * sometimes added to the instrumented project when storing "sites.txt" itself
  * would be unwanted.
- * 
- * @author nathan
- * 
  */
 public class SitesConf {
 
-    public static String getSiteLines() {
-        return null;
-    }
+  public static String getSiteLines() {
+    return null;
+  }
 
 }

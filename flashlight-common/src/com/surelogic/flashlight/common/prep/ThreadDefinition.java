@@ -2,14 +2,14 @@ package com.surelogic.flashlight.common.prep;
 
 public final class ThreadDefinition extends ReferenceDefinition {
 
-	@Override
+  @Override
   public String getXMLElementName() {
-		return "thread-definition";
-	}
+    return "thread-definition";
+  }
 
-	@Override
-	protected String getFlag() {
-		return "T";
-	}
+  @Override
+  protected String getFlag() {
+    return "T";
+  }
 
 }

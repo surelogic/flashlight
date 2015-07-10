@@ -1,11 +1,11 @@
 package com.surelogic._flashlight;
 
-public interface IFieldInfo {	
-	IdPhantomReference SHARED_BY_THREADS = Phantom.ofClass(IFieldInfo.class);
-	
-	void setLastThread(long key, IdPhantomReference thread);
+public interface IFieldInfo {
+  IdPhantomReference SHARED_BY_THREADS = Phantom.ofClass(IFieldInfo.class);
 
-	boolean getSingleThreadedFields(SingleThreadedRefs refs);
+  void setLastThread(long key, IdPhantomReference thread);
 
-	void clear();
+  boolean getSingleThreadedFields(SingleThreadedRefs refs);
+
+  void clear();
 }

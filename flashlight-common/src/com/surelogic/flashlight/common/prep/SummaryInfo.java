@@ -36,9 +36,6 @@ import com.surelogic.common.jdbc.StringRowHandler;
  * larger as more fields, classes, or methods are added to the program, but it
  * is not acceptable for it to grow larger based on how long the program is run,
  * or how many locks and threads it creates at runtime.
- * 
- * @author nathan
- * 
  */
 public class SummaryInfo {
 
@@ -124,24 +121,25 @@ public class SummaryInfo {
 
     @Override
     public SummaryInfo perform(final Query q) {
-      LimitedResult<Lock> locks = q.prepared("Deadlock.lockContention",
-          LimitRowHandler.from(new LockContentionHandler(q), LOCK_LIMIT)).call();
-      LimitedResult<Thread> threads = q.prepared("SummaryInfo.threads",
-          LimitRowHandler.from(new ThreadContentionHandler(), THREAD_LIMIT)).call();
+      LimitedResult<Lock> locks = q
+          .prepared("Deadlock.lockContention", LimitRowHandler.from(new LockContentionHandler(q), LOCK_LIMIT)).call();
+      LimitedResult<Thread> threads = q
+          .prepared("SummaryInfo.threads", LimitRowHandler.from(new ThreadContentionHandler(), THREAD_LIMIT)).call();
       Collections.sort(threads);
 
-      List<LockSetEvidence> emptyLockSets = new ArrayList<LockSetEvidence>();
+      List<LockSetEvidence> emptyLockSets = new ArrayList<>();
       List<Field> nonstatics = q.prepared("SummaryInfo.emptyLockSets", new FieldHandler()).call();
       for (Field f : nonstatics) {
-        LockSetEvidence e = new LockSetEvidence(f, q.prepared("SummaryInfo.likelyLocks",
-            LimitRowHandler.from(new LockSetEvidenceHandler(q, f), LOCK_LIMIT)).call(f.id, f.receiver, f.id, f.receiver, f.id,
-            f.receiver));
+        LockSetEvidence e = new LockSetEvidence(f,
+            q.prepared("SummaryInfo.likelyLocks", LimitRowHandler.from(new LockSetEvidenceHandler(q, f), LOCK_LIMIT)).call(f.id,
+                f.receiver, f.id, f.receiver, f.id, f.receiver));
         emptyLockSets.add(e);
       }
       List<Field> statics = q.prepared("SummaryInfo.emptyStaticLockSets", new FieldHandler()).call();
       for (Field f : statics) {
-        LockSetEvidence e = new LockSetEvidence(f, q.prepared("SummaryInfo.likelyStaticLocks",
-            LimitRowHandler.from(new LockSetEvidenceHandler(q, f), LOCK_LIMIT)).call(f.id, f.id, f.id));
+        LockSetEvidence e = new LockSetEvidence(f,
+            q.prepared("SummaryInfo.likelyStaticLocks", LimitRowHandler.from(new LockSetEvidenceHandler(q, f), LOCK_LIMIT))
+                .call(f.id, f.id, f.id));
         emptyLockSets.add(e);
       }
       Collections.sort(emptyLockSets);
@@ -152,7 +150,7 @@ public class SummaryInfo {
       CoverageSite root = new CoverageSite();
       process(q, root, q.prepared("CoverageInfo.fieldCoverage", new CoverageHandler()).call());
       process(q, root, q.prepared("CoverageInfo.lockCoverage", new CoverageHandler()).call());
-      List<FieldCoverage> fields = new ArrayList<FieldCoverage>();
+      List<FieldCoverage> fields = new ArrayList<>();
       fields.addAll(q.prepared("SummaryInfo.staticFieldCoverage", new FieldCoverageHandler()).call());
       return new SummaryInfo(locks, threads, emptyLockSets, badPublishes, deadlocks, objectCount, classCount, root, fields);
     }
@@ -219,16 +217,14 @@ public class SummaryInfo {
     private final long id;
     private final String timesAcquired;
     private final String heldPercentage;
-    private final List<LockSetSite> heldAt;
-    private final List<Site> notHeldAt;
+    private final List<LockSetSite> heldAt = new ArrayList<>();
+    private final List<Site> notHeldAt = new ArrayList<>();
 
     public LockSetLock(final String name, final long id, final String timesAcquired, final String heldPercentage) {
       this.name = name;
       this.id = id;
       this.timesAcquired = timesAcquired;
       this.heldPercentage = heldPercentage;
-      heldAt = new ArrayList<LockSetSite>();
-      notHeldAt = new ArrayList<Site>();
     }
 
     public String getName() {
@@ -355,19 +351,15 @@ public class SummaryInfo {
     public LockSetLock handle(final Row r) {
       LockSetLock l = new LockSetLock(r.nextString(), r.nextLong(), r.nextString(), r.nextString());
       if (field.isStatic()) {
-        l.getHeldAt()
-            .addAll(
-                q.prepared("SummaryInfo.lockHeldAt", new LockSetSiteHandler()).call(field.getId(), l.getId(), field.getId(),
-                    l.getId()));
-        l.getNotHeldAt().addAll(
-            q.prepared("SummaryInfo.lockNotHeldAt", new SiteHandler()).call(field.getId(), l.getId(), l.getId()));
+        l.getHeldAt().addAll(q.prepared("SummaryInfo.lockHeldAt", new LockSetSiteHandler()).call(field.getId(), l.getId(),
+            field.getId(), l.getId()));
+        l.getNotHeldAt()
+            .addAll(q.prepared("SummaryInfo.lockNotHeldAt", new SiteHandler()).call(field.getId(), l.getId(), l.getId()));
       } else {
-        l.getHeldAt().addAll(
-            q.prepared("SummaryInfo.lockInstanceHeldAt", new LockSetSiteHandler()).call(field.getId(), field.getReceiver(),
-                l.getId(), field.getId(), field.getReceiver(), l.getId()));
-        l.getNotHeldAt().addAll(
-            q.prepared("SummaryInfo.lockInstanceNotHeldAt", new SiteHandler()).call(field.getId(), field.getReceiver(), l.getId(),
-                l.getId()));
+        l.getHeldAt().addAll(q.prepared("SummaryInfo.lockInstanceHeldAt", new LockSetSiteHandler()).call(field.getId(),
+            field.getReceiver(), l.getId(), field.getId(), field.getReceiver(), l.getId()));
+        l.getNotHeldAt().addAll(q.prepared("SummaryInfo.lockInstanceNotHeldAt", new SiteHandler()).call(field.getId(),
+            field.getReceiver(), l.getId(), l.getId()));
       }
       return l;
     }
@@ -395,7 +387,7 @@ public class SummaryInfo {
 
     public Set<Edge> getEdges() {
       if (edges == null) {
-        edges = new TreeSet<SummaryInfo.Edge>();
+        edges = new TreeSet<>();
       }
       return edges;
     }
@@ -410,7 +402,7 @@ public class SummaryInfo {
      * @return
      */
     Set<String> getLocks() {
-      final Set<String> locks = new TreeSet<String>();
+      final Set<String> locks = new TreeSet<>();
       for (final Edge e : getEdges()) {
         locks.add(e.getHeld());
         locks.add(e.getAcquired());
@@ -424,7 +416,7 @@ public class SummaryInfo {
      * @return
      */
     Set<String> getThreads() {
-      Set<String> set = new HashSet<String>();
+      Set<String> set = new HashSet<>();
       for (Edge e : getEdges()) {
         set.addAll(e.getThreads());
       }
@@ -441,7 +433,7 @@ public class SummaryInfo {
 
     public Map<Edge, DeadlockTrace> getTraces() {
       if (traces == null) {
-        traces = new HashMap<SummaryInfo.Edge, SummaryInfo.DeadlockTrace>();
+        traces = new HashMap<>();
       }
       return traces;
     }
@@ -585,7 +577,7 @@ public class SummaryInfo {
 
     public ContentionSite(final Site s) {
       this.s = s;
-      durations = new ArrayList<ThreadDuration>();
+      durations = new ArrayList<>();
     }
 
     public Site getSite() {
@@ -611,7 +603,7 @@ public class SummaryInfo {
 
     @Override
     public List<ContentionSite> handle(final Result result) {
-      List<ContentionSite> sites = new ArrayList<ContentionSite>();
+      List<ContentionSite> sites = new ArrayList<>();
       ContentionSite cs = null;
       Site s = null;
       for (Row r : result) {
@@ -942,7 +934,7 @@ public class SummaryInfo {
       this.acquired = Integer.toString(acquired);
       this.blockTime = blockTime;
       this.averageBlock = averageBlock;
-      contentionSites = new ArrayList<SummaryInfo.ContentionSite>();
+      contentionSites = new ArrayList<>();
     }
 
     public String getName() {
@@ -1113,7 +1105,7 @@ public class SummaryInfo {
 
     @Override
     public LimitedResult<DeadlockEvidence> handle(final Result result) {
-      List<DeadlockEvidence> deadlocks = new ArrayList<DeadlockEvidence>();
+      List<DeadlockEvidence> deadlocks = new ArrayList<>();
       DeadlockEvidence deadlock = new DeadlockEvidence(-1);
       int cycleCount = 0;
       for (final Row r : result) {
@@ -1132,13 +1124,13 @@ public class SummaryInfo {
         final int count = r.nextInt();
         final Timestamp first = r.nextTimestamp();
         final Timestamp last = r.nextTimestamp();
-        Edge e = new Edge(held, heldId, acquired, acquiredId, count, first, last, q.prepared("Deadlock.lockEdgeThreads",
-            new StringRowHandler()).call(heldId, acquiredId));
+        Edge e = new Edge(held, heldId, acquired, acquiredId, count, first, last,
+            q.prepared("Deadlock.lockEdgeThreads", new StringRowHandler()).call(heldId, acquiredId));
         deadlock.getEdges().add(e);
         DeadlockTrace dt = q.prepared("Deadlock.lockEdgeTraces", new DeadlockTraceHandler(q, e)).call(heldId, acquiredId);
         deadlock.addTrace(dt);
       }
-      return new LimitedResult<SummaryInfo.DeadlockEvidence>(deadlocks, cycleCount);
+      return new LimitedResult<>(deadlocks, cycleCount);
     }
   }
 
@@ -1377,8 +1369,8 @@ public class SummaryInfo {
 
     public CoverageSite(final Site site) {
       this.site = site;
-      threadsSeen = new HashSet<Long>();
-      children = new TreeMap<Site, CoverageSite>();
+      threadsSeen = new HashSet<>();
+      children = new TreeMap<>();
     }
 
     public CoverageSite() {
@@ -1521,13 +1513,13 @@ public class SummaryInfo {
   static class CoverageHandler implements ResultHandler<Map<Long, Set<Long>>> {
     @Override
     public Map<Long, Set<Long>> handle(final Result result) {
-      Map<Long, Set<Long>> map = new HashMap<Long, Set<Long>>();
+      Map<Long, Set<Long>> map = new HashMap<>();
       for (Row r : result) {
         long trace = r.nextLong();
         long thread = r.nextLong();
         Set<Long> set = map.get(trace);
         if (set == null) {
-          set = new HashSet<Long>();
+          set = new HashSet<>();
           map.put(trace, set);
         }
         set.add(thread);
@@ -1542,7 +1534,7 @@ public class SummaryInfo {
 
     public FieldCoverage(final Field field) {
       this.field = field;
-      threadsSeen = new HashSet<Long>();
+      threadsSeen = new HashSet<>();
     }
 
     public String getClazz() {
@@ -1581,7 +1573,7 @@ public class SummaryInfo {
     public List<FieldCoverage> handle(final Result result) {
       Field current = null;
       FieldCoverage currentCov = null;
-      List<FieldCoverage> fields = new ArrayList<FieldCoverage>();
+      List<FieldCoverage> fields = new ArrayList<>();
       for (Row r : result) {
         long id = r.nextLong();
         String pakkage = r.nextString();

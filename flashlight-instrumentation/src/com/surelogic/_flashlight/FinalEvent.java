@@ -6,23 +6,23 @@ package com.surelogic._flashlight;
  */
 final class FinalEvent extends Event {
 
-    /**
-     * The singleton instance.
-     */
-    static final FinalEvent FINAL_EVENT = new FinalEvent();
+  /**
+   * The singleton instance.
+   */
+  static final FinalEvent FINAL_EVENT = new FinalEvent();
 
-    private FinalEvent() {
+  private FinalEvent() {
 
-    }
+  }
 
-    @Override
-    void accept(final EventVisitor v) {
-        v.visit(this);
-        v.flush();
-    }
+  @Override
+  void accept(final EventVisitor v) {
+    v.visit(this);
+    v.flush();
+  }
 
-    @Override
-    public String toString() {
-        return "<final/>";
-    }
+  @Override
+  public String toString() {
+    return "<final/>";
+  }
 }

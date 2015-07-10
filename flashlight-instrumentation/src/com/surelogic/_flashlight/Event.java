@@ -5,32 +5,32 @@ package com.surelogic._flashlight;
  * each specific type of event that can occur.
  */
 public abstract class Event {
-    /**
-     * Accepts this event on the passed visitor.
-     * 
-     * @param v
-     *            the visitor for this event.
-     */
-    abstract void accept(final EventVisitor v);
+  /**
+   * Accepts this event on the passed visitor.
+   * 
+   * @param v
+   *          the visitor for this event.
+   */
+  abstract void accept(final EventVisitor v);
 
-    /**
-     * Whether or not this event has a timestamp that marks it as occurring at a
-     * particular time
-     * 
-     * @return
-     */
-    boolean isTimedEvent() {
-        return false;
-    }
+  /**
+   * Whether or not this event has a timestamp that marks it as occurring at a
+   * particular time
+   * 
+   * @return
+   */
+  boolean isTimedEvent() {
+    return false;
+  }
 
-    /**
-     * The time the event occurs at.
-     * 
-     * @return
-     * @throws UnsupportedOperationException
-     *             if this is not a timed event
-     */
-    long getTime() {
-        throw new UnsupportedOperationException();
-    }
+  /**
+   * The time the event occurs at.
+   * 
+   * @return
+   * @throws UnsupportedOperationException
+   *           if this is not a timed event
+   */
+  long getTime() {
+    throw new UnsupportedOperationException();
+  }
 }

@@ -11,31 +11,30 @@ import java.util.Date;
  */
 final class Time extends TimedEvent {
 
-	private final Date f_date;
+  private final Date f_date;
 
-	Date getDate() {
-		return f_date;
-	}
+  Date getDate() {
+    return f_date;
+  }
 
-	Time(final Date date, final long nanoTime) {
-		super(nanoTime);
-		f_date = date;
-	}
+  Time(final Date date, final long nanoTime) {
+    super(nanoTime);
+    f_date = date;
+  }
 
-	@Override
-	void accept(final EventVisitor v) {
-		v.visit(this);
-	}
+  @Override
+  void accept(final EventVisitor v) {
+    v.visit(this);
+  }
 
-	@Override
-	public String toString() {
-		final StringBuilder b = new StringBuilder();
-		b.append("<time");
-		addNanoTime(b);
-		final SimpleDateFormat dateFormat = new SimpleDateFormat(
-				"yyyy-MM-dd HH:mm:ss.SSS");
-		Entities.addAttribute("wall-clock-time", dateFormat.format(f_date), b);
-		b.append("/>");
-		return b.toString();
-	}
+  @Override
+  public String toString() {
+    final StringBuilder b = new StringBuilder();
+    b.append("<time");
+    addNanoTime(b);
+    final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+    Entities.addAttribute("wall-clock-time", dateFormat.format(f_date), b);
+    b.append("/>");
+    return b.toString();
+  }
 }

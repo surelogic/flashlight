@@ -5,42 +5,42 @@ import com.surelogic._flashlight.common.AttributeType;
 
 public abstract class HappensBeforeEvent extends ProgramEvent {
 
-    private final String f_id;
-    private final long f_nanoStart;
-    private final long f_nanoEnd;
-    private final long f_threadId;
-    private final long f_traceId;
+  private final String f_id;
+  private final long f_nanoStart;
+  private final long f_nanoEnd;
+  private final long f_threadId;
+  private final long f_traceId;
 
-    HappensBeforeEvent(String id, long siteId, State state, long nanoStart) {
-        f_id = id;
-        f_threadId = state.thread.getId();
-        f_nanoStart = nanoStart;
-        f_nanoEnd = System.nanoTime();
-        f_traceId = state.getCurrentTrace(siteId).getId();
-    }
+  HappensBeforeEvent(String id, long siteId, State state, long nanoStart) {
+    f_id = id;
+    f_threadId = state.thread.getId();
+    f_nanoStart = nanoStart;
+    f_nanoEnd = System.nanoTime();
+    f_traceId = state.getCurrentTrace(siteId).getId();
+  }
 
-    protected final void addId(final StringBuilder b) {
-        Entities.addAttribute(AttributeType.ID.label(), f_id, b);
-    }
+  protected final void addId(final StringBuilder b) {
+    Entities.addAttribute(AttributeType.ID.label(), f_id, b);
+  }
 
-    protected final void addNanoTime(final StringBuilder b) {
-        Entities.addAttribute(AttributeType.NANO_START.label(), f_nanoStart, b);
-        Entities.addAttribute(AttributeType.NANO_END.label(), f_nanoEnd, b);
-    }
+  protected final void addNanoTime(final StringBuilder b) {
+    Entities.addAttribute(AttributeType.NANO_START.label(), f_nanoStart, b);
+    Entities.addAttribute(AttributeType.NANO_END.label(), f_nanoEnd, b);
+  }
 
-    protected void addThread(final StringBuilder b) {
-        Entities.addAttribute(AttributeType.THREAD.label(), f_threadId, b);
-        Entities.addAttribute(AttributeType.TRACE.label(), f_traceId, b);
-    }
+  protected void addThread(final StringBuilder b) {
+    Entities.addAttribute(AttributeType.THREAD.label(), f_threadId, b);
+    Entities.addAttribute(AttributeType.TRACE.label(), f_traceId, b);
+  }
 
-    @Override
-    boolean isTimedEvent() {
-        return true;
-    }
+  @Override
+  boolean isTimedEvent() {
+    return true;
+  }
 
-    @Override
-    long getTime() {
-        return f_nanoStart;
-    }
+  @Override
+  long getTime() {
+    return f_nanoStart;
+  }
 
 }

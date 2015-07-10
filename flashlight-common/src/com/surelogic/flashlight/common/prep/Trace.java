@@ -14,50 +14,48 @@ import com.surelogic._flashlight.common.PreppedAttributes;
 // Not used?
 public final class Trace extends AbstractPrep {
 
-	private PreparedStatement f_ps;
-	private int count = 0;
+  private PreparedStatement f_ps;
+  private int count = 0;
 
-	@Override
+  @Override
   public void parse(final PreppedAttributes attributes) throws SQLException {
-		final long parent = attributes.getLong(PARENT_ID);
-		final long site = attributes.getLong(SITE_ID);
-		final long id = attributes.getLong(ID);
-		int idx = 1;
-		f_ps.setLong(idx++, id);
-		f_ps.setLong(idx++, site);
-		f_ps.setLong(idx++, parent);
-		if (doInsert) {
-			f_ps.addBatch();
-			if (++count == 10000) {
-				f_ps.executeBatch();
-				count = 0;
-			}
-		}
-	}
+    final long parent = attributes.getLong(PARENT_ID);
+    final long site = attributes.getLong(SITE_ID);
+    final long id = attributes.getLong(ID);
+    int idx = 1;
+    f_ps.setLong(idx++, id);
+    f_ps.setLong(idx++, site);
+    f_ps.setLong(idx++, parent);
+    if (doInsert) {
+      f_ps.addBatch();
+      if (++count == 10000) {
+        f_ps.executeBatch();
+        count = 0;
+      }
+    }
+  }
 
-	@Override
+  @Override
   public String getXMLElementName() {
-		return "trace-node";
-	}
+    return "trace-node";
+  }
 
-	@Override
-	public void setup(final Connection c, final Timestamp start,
-			final long startNS, final ScanRawFilePreScan scanResults)
-			throws SQLException {
-		super.setup(c, start, startNS, scanResults);
-		f_ps = c
-				.prepareStatement("INSERT INTO TRACE (Id,Site,Parent) VALUES (?,?,?)");
-	}
+  @Override
+  public void setup(final Connection c, final Timestamp start, final long startNS, final ScanRawFilePreScan scanResults)
+      throws SQLException {
+    super.setup(c, start, startNS, scanResults);
+    f_ps = c.prepareStatement("INSERT INTO TRACE (Id,Site,Parent) VALUES (?,?,?)");
+  }
 
-	@Override
-	public void flush(final long endTime) throws SQLException {
-		if (count > 0) {
-			f_ps.executeBatch();
-			count = 0;
-		}
-		count = 0;
-		super.flush(endTime);
-		f_ps.close();
-	}
+  @Override
+  public void flush(final long endTime) throws SQLException {
+    if (count > 0) {
+      f_ps.executeBatch();
+      count = 0;
+    }
+    count = 0;
+    super.flush(endTime);
+    f_ps.close();
+  }
 
 }

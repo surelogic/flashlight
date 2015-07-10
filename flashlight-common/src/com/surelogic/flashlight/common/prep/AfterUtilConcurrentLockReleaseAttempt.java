@@ -7,28 +7,27 @@ import com.surelogic.flashlight.common.LockType;
 
 public final class AfterUtilConcurrentLockReleaseAttempt extends Lock {
 
-    public AfterUtilConcurrentLockReleaseAttempt(
-            final IntrinsicLockDurationRowInserter i) {
-        super(i);
-    }
+  public AfterUtilConcurrentLockReleaseAttempt(final IntrinsicLockDurationRowInserter i) {
+    super(i);
+  }
 
-    @Override
-    protected LockType getType() {
-        return LockType.UTIL;
-    }
+  @Override
+  protected LockType getType() {
+    return LockType.UTIL;
+  }
 
-    @Override
-    public String getXMLElementName() {
-        return "after-util-concurrent-lock-release-attempt";
-    }
+  @Override
+  public String getXMLElementName() {
+    return "after-util-concurrent-lock-release-attempt";
+  }
 
-    @Override
-    protected LockState getState() {
-        return LockState.AFTER_RELEASE;
-    }
+  @Override
+  protected LockState getState() {
+    return LockState.AFTER_RELEASE;
+  }
 
-    @Override
-    protected Boolean isSuccess(PreppedAttributes attr) {
-        return attr.getBoolean(RELEASED_LOCK);
-    }
+  @Override
+  protected Boolean isSuccess(PreppedAttributes attr) {
+    return attr.getBoolean(RELEASED_LOCK);
+  }
 }

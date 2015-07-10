@@ -13,11 +13,10 @@ import com.surelogic._flashlight.rewriter.runtime.IIdObject;
 import com.surelogic._flashlight.rewriter.runtime.IdObject;
 
 public abstract class IdPhantomReference extends PhantomReference {
-  private static final boolean useIdObject = true;
   static final ConcurrentReferenceHashMap.Hasher hasher = new ConcurrentReferenceHashMap.Hasher() {
 
     public int hashCode(final Object o) {
-      if (useIdObject && o instanceof IIdObject) {
+      if (o instanceof IIdObject) {
         return ((IIdObject) o).identity$HashCode();
       } else {
         return System.identityHashCode(o);
@@ -171,9 +170,11 @@ public abstract class IdPhantomReference extends PhantomReference {
       pr = factory.newReference(o, q, id);
 
     } else {
-      if (useIdObject && o instanceof IIdObject) {
+      if (o instanceof IIdObject) {
         final IIdObject ido = (IIdObject) o;
-        pr = (V) ido.flPhantom$Reference();
+        @SuppressWarnings("unchecked")
+        final V tempPr = (V) ido.flPhantom$Reference();
+        pr = tempPr;
         if (pr != null) {
           return pr;
         }

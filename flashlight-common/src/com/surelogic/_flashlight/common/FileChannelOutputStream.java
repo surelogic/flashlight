@@ -86,13 +86,13 @@ public class FileChannelOutputStream extends OutputStream {
 
   public static OutputStream create(File file) throws IOException {
     final OutputStream os;
-//    if (false) {
-//      os = new FileChannelOutputStream(file);
-//      return new BufferedOutputStream(os, 32768);
-//    } else {
-      os = new FileOutputStream(file);
-      return new BufferedOutputStream(os, 32768);
-//    }
+    // if (false) {
+    // os = new FileChannelOutputStream(file);
+    // return new BufferedOutputStream(os, 32768);
+    // } else {
+    os = new FileOutputStream(file);
+    return new BufferedOutputStream(os, 32768);
+    // }
   }
 
   public static void main(String... args) throws IOException {

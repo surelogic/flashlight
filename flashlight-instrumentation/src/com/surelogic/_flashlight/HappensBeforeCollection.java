@@ -5,40 +5,39 @@ import com.surelogic._flashlight.common.AttributeType;
 
 public class HappensBeforeCollection extends HappensBeforeEvent {
 
-    private final long coll;
-    private final long obj;
-    private final long siteId;
+  private final long coll;
+  private final long obj;
+  private final long siteId;
 
-    HappensBeforeCollection(final String id, final ObjectPhantomReference coll,
-            final ObjectPhantomReference obj, long siteId, State state,
-            long nanoTime) {
-        super(id, siteId, state, nanoTime);
-        this.coll = coll.getId();
-        this.obj = obj == null ? -1 : obj.getId();
-        this.siteId = siteId;
-    }
+  HappensBeforeCollection(final String id, final ObjectPhantomReference coll, final ObjectPhantomReference obj, long siteId,
+      State state, long nanoTime) {
+    super(id, siteId, state, nanoTime);
+    this.coll = coll.getId();
+    this.obj = obj == null ? -1 : obj.getId();
+    this.siteId = siteId;
+  }
 
-    @Override
-    void accept(EventVisitor v) {
-        v.visit(this);
-    }
+  @Override
+  void accept(EventVisitor v) {
+    v.visit(this);
+  }
 
-    public long getObj() {
-        return obj;
-    }
+  public long getObj() {
+    return obj;
+  }
 
-    @Override
-    public String toString() {
-        final StringBuilder b = new StringBuilder(128);
-        b.append("<happens-before-coll");
-        addId(b);
-        addNanoTime(b);
-        addThread(b);
-        Entities.addAttribute(AttributeType.SITE_ID.label(), siteId, b);
-        Entities.addAttribute(AttributeType.COLLECTION.label(), coll, b);
-        Entities.addAttribute(AttributeType.OBJECT.label(), obj, b);
-        b.append("/>");
-        return b.toString();
-    }
+  @Override
+  public String toString() {
+    final StringBuilder b = new StringBuilder(128);
+    b.append("<happens-before-coll");
+    addId(b);
+    addNanoTime(b);
+    addThread(b);
+    Entities.addAttribute(AttributeType.SITE_ID.label(), siteId, b);
+    Entities.addAttribute(AttributeType.COLLECTION.label(), coll, b);
+    Entities.addAttribute(AttributeType.OBJECT.label(), obj, b);
+    b.append("/>");
+    return b.toString();
+  }
 
 }

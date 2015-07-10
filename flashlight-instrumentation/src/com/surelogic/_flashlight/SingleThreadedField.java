@@ -9,23 +9,23 @@ package com.surelogic._flashlight;
  */
 abstract class SingleThreadedField extends ObservationalEvent {
 
-	private final long f_fieldId;
+  private final long f_fieldId;
 
-	long getFieldId() {
-		return f_fieldId;
-	}
+  long getFieldId() {
+    return f_fieldId;
+  }
 
-	SingleThreadedField(final long fieldId) {
-		f_fieldId = fieldId;
-	}
+  SingleThreadedField(final long fieldId) {
+    f_fieldId = fieldId;
+  }
 
-	protected final void addField(final StringBuilder b) {
-		Entities.addAttribute("field", f_fieldId, b);
-	}
-	
-	@Override
-	public abstract int hashCode();
-	
-	@Override
-	public abstract boolean equals(Object o);
+  protected final void addField(final StringBuilder b) {
+    Entities.addAttribute("field", f_fieldId, b);
+  }
+
+  @Override
+  public abstract int hashCode();
+
+  @Override
+  public abstract boolean equals(Object o);
 }

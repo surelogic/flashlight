@@ -1,10 +1,5 @@
 package com.surelogic.flashlight.common.prep;
 
-import gnu.trove.map.TLongObjectMap;
-import gnu.trove.map.hash.TLongObjectHashMap;
-import gnu.trove.procedure.TLongObjectProcedure;
-import gnu.trove.procedure.TObjectProcedure;
-
 import java.io.IOException;
 import java.net.URL;
 import java.sql.Connection;
@@ -16,6 +11,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.carrotsearch.hppc.LongObjectMap;
+import com.carrotsearch.hppc.LongObjectScatterMap;
+import com.carrotsearch.hppc.procedures.LongObjectProcedure;
 import com.surelogic.common.jdbc.BooleanResultHandler;
 import com.surelogic.common.jdbc.ConnectionQuery;
 import com.surelogic.common.jdbc.LongResultHandler;
@@ -93,7 +91,7 @@ public class HappensBeforePostPrep implements IPostPrep {
 
   static class ClassInit {
     StaticAccess end;
-    Map<Long, StaticAccess> threads = new HashMap<Long, StaticAccess>();
+    Map<Long, StaticAccess> threads = new HashMap<>();
   }
 
   private class StaticAccess {
@@ -110,7 +108,7 @@ public class HappensBeforePostPrep implements IPostPrep {
   }
 
   class ClassInitHandler extends NullResultHandler {
-    final Map<String, ClassInit> classes = new HashMap<String, ClassInit>();
+    final Map<String, ClassInit> classes = new HashMap<>();
     private final Queryable<Void> insertClassInit = q.prepared("Accesses.prep.insertClassInit");
     private final Queryable<Void> insertClassAccess = q.prepared("Accesses.prep.insertClassAccess");
     private final Queryable<Long> selectClass = q.prepared("Accesses.prep.selectClass", new LongResultHandler());
@@ -261,7 +259,7 @@ public class HappensBeforePostPrep implements IPostPrep {
 
       class InterleavingFieldHandler extends NullResultHandler {
 
-        TLongObjectMap<Interleaving> fields = new TLongObjectHashMap<Interleaving>();
+        LongObjectMap<Interleaving> fields = new LongObjectScatterMap<>();
 
         @Override
         public void doHandle(Result result) {
@@ -293,28 +291,23 @@ public class HappensBeforePostPrep implements IPostPrep {
               i.inThread = inThread;
             } else {
               final boolean val = inThread;
-              fields.forEachValue(new TObjectProcedure<Interleaving>() {
-
-                @Override
-                public boolean execute(Interleaving i) {
-                  i.inThread = val;
-                  return true;
+              fields.forEach(new LongObjectProcedure<Interleaving>() {
+                public void apply(long key, Interleaving value) {
+                  value.inThread = val;
                 }
               });
             }
           }
           if (isFieldLock.call(field, receiver) != Boolean.TRUE) {
-            insertBlockStats.call(field, receiver, lastThread, beginThread, endThread, reads, writes, (double) interleavings * 100
-                / (reads + writes));
-            fields.forEachEntry(new TLongObjectProcedure<Interleaving>() {
-
-              @Override
-              public boolean execute(long rField, Interleaving i) {
+            insertBlockStats.call(field, receiver, lastThread, beginThread, endThread, reads, writes,
+                (double) interleavings * 100 / (reads + writes));
+            fields.forEach(new LongObjectProcedure<Interleaving>() {
+              public void apply(long rField, Interleaving value) {
                 if (isFieldLock.call(rField, receiver) != Boolean.TRUE) {
                   insertFieldBlockStats.call(field, rField, receiver, lastThread, beginThread, endThread, reads, writes,
-                      (double) i.interleavings * 100 / (reads + writes));
+                      (double) value.interleavings * 100 / (reads + writes));
                 }
-                return true;
+
               }
             });
           }

@@ -8,12 +8,12 @@ package com.surelogic._flashlight;
  */
 interface IdPhantomReferenceCreationObserver {
 
-	/**
-	 * Notification that a new {@link IdPhantomReference} has been created
-	 * within flashlight.
-	 * 
-	 * @param r
-	 *            the new {@link IdPhantomReference} instance.
-	 */
-	void notify(final ClassPhantomReference o, final IdPhantomReference r);
+  /**
+   * Notification that a new {@link IdPhantomReference} has been created within
+   * flashlight.
+   * 
+   * @param r
+   *          the new {@link IdPhantomReference} instance.
+   */
+  void notify(final ClassPhantomReference o, final IdPhantomReference r);
 }

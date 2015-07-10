@@ -1,7 +1,5 @@
 package com.surelogic.flashlight.common.jobs;
 
-import gnu.trove.set.hash.TLongHashSet;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,6 +17,7 @@ import java.util.logging.Level;
 
 import javax.xml.parsers.SAXParser;
 
+import com.carrotsearch.hppc.LongSet;
 import com.surelogic.NonNull;
 import com.surelogic.Nullable;
 import com.surelogic._flashlight.common.InstrumentationConstants;
@@ -109,8 +108,8 @@ public final class PrepSLJob extends AbstractSLJob {
   }
 
   private IPostPrep[] getPostPrep(ClassHierarchy ch) {
-    return new IPostPrep[] { new LockSetAnalysis(), new LockInfoPostPrep(), new HappensBeforePostPrep(ch),
-        new ThreadNamePostPrep(), new LockIsClassPostPrep(), new EmptyQueries(f_runDirectory, f_queries) };
+    return new IPostPrep[] { new LockSetAnalysis(), new LockInfoPostPrep(), new HappensBeforePostPrep(ch), new ThreadNamePostPrep(),
+        new LockIsClassPostPrep(), new EmptyQueries(f_runDirectory, f_queries) };
   }
 
   final RunDirectory f_runDirectory;
@@ -153,8 +152,9 @@ public final class PrepSLJob extends AbstractSLJob {
     final File runDir = f_runDirectory.getDirectory();
     int estEventsInRawFile = FlashlightFileUtility.estimateNumEvents(f_dataFiles);
 
-    final ClassHierarchy ch = ClassHierarchy.load(new File(runDir, InstrumentationConstants.FL_CLASS_HIERARCHY_FILE_LOC), new File(
-        runDir, InstrumentationConstants.FL_SITES_FILE_LOC), new File(runDir, InstrumentationConstants.FL_HAPPENS_BEFORE_FILE_LOC));
+    final ClassHierarchy ch = ClassHierarchy.load(new File(runDir, InstrumentationConstants.FL_CLASS_HIERARCHY_FILE_LOC),
+        new File(runDir, InstrumentationConstants.FL_SITES_FILE_LOC),
+        new File(runDir, InstrumentationConstants.FL_HAPPENS_BEFORE_FILE_LOC));
 
     final IPostPrep[] postPrepWork = getPostPrep(ch);
 
@@ -270,7 +270,7 @@ public final class PrepSLJob extends AbstractSLJob {
           final int numWindows = (int) (scanResults.getMaxReceiverId() / f_windowSize)
               + (scanResults.getMaxReceiverId() % f_windowSize > 0 ? 1 : 0);
           rprepMonitor.begin(SLUtility.safeLongToInt(eventsInRawFile / 16 * numWindows));
-          final TLongHashSet synthetics = scanResults.getSynthetics();
+          final LongSet synthetics = scanResults.getSynthetics();
           final IRangePrep[] rpElements = getRangeHandlers();
           for (int j = 0; j < numWindows; j++) {
             final long begin = f_windowSize * j;
@@ -393,7 +393,7 @@ public final class PrepSLJob extends AbstractSLJob {
 
   private List<NullDBTransaction> addConstraints(final SLProgressMonitor monitor) {
     final URL script = f_database.getSchemaLoader().getSchemaResource("add_constraints.sql");
-    final List<NullDBTransaction> transactions = new ArrayList<NullDBTransaction>();
+    final List<NullDBTransaction> transactions = new ArrayList<>();
     try {
       for (final StringBuilder statement : SchemaUtility.getSQLStatements(script)) {
         transactions.add(new NullDBTransaction() {

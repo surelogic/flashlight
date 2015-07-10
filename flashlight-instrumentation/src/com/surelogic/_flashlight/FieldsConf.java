@@ -10,13 +10,13 @@ package com.surelogic._flashlight;
  */
 public class FieldsConf {
 
-    /**
-     * Returns the data generally found in fields.txt as a String.
-     * 
-     * @return
-     */
-    public static String getFieldLines() {
-        return null;
-    }
+  /**
+   * Returns the data generally found in fields.txt as a String.
+   * 
+   * @return
+   */
+  public static String getFieldLines() {
+    return null;
+  }
 
 }

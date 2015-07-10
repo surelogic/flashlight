@@ -1,8 +1,5 @@
 package com.surelogic.flashlight.common.prep;
 
-import gnu.trove.map.hash.TLongObjectHashMap;
-import gnu.trove.procedure.TLongObjectProcedure;
-
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -19,6 +16,9 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Logger;
 
+import com.carrotsearch.hppc.LongObjectMap;
+import com.carrotsearch.hppc.LongObjectScatterMap;
+import com.carrotsearch.hppc.procedures.LongObjectProcedure;
 import com.surelogic.common.jdbc.ConnectionQuery;
 import com.surelogic.common.jdbc.NullResultHandler;
 import com.surelogic.common.jdbc.NullRowHandler;
@@ -148,8 +148,8 @@ public class LockSetAnalysis implements IPostPrep {
 
       @Override
       public void doHandle(final Result lockDurations) {
-        final LockSets sets = new LockSets(lockDurations, q.prepared("LockSet.v2.updateAccessLocksHeld"), q
-            .prepared("LockSet.v2.updateIndirectAccessLocksHeld"));
+        final LockSets sets = new LockSets(lockDurations, q.prepared("LockSet.v2.updateAccessLocksHeld"),
+            q.prepared("LockSet.v2.updateIndirectAccessLocksHeld"));
         q.prepared("LockSet.v2.indirectAccesses", new NullResultHandler() {
           @Override
           protected void doHandle(final Result indirectAccesses) {
@@ -208,20 +208,16 @@ public class LockSetAnalysis implements IPostPrep {
 
   private class LockSets {
 
-    private final TLongObjectHashMap<Set<LockId>> fields;
-    private final TLongObjectHashMap<TLongObjectHashMap<Set<LockId>>> instances;
-    private final Map<StaticInstance, StaticCount> staticCounts;
-    private final Map<FieldInstance, Count> counts;
+    private final LongObjectMap<Set<LockId>> fields = new LongObjectScatterMap<>();
+    private final LongObjectMap<LongObjectMap<Set<LockId>>> instances = new LongObjectScatterMap<>();
+    private final Map<StaticInstance, StaticCount> staticCounts = new HashMap<>();
+    private final Map<FieldInstance, Count> counts = new HashMap<>();
     final ThreadLocks locks;
     final Queryable<?> updateAccess;
     final Queryable<?> updateIndirectAccess;
 
     public LockSets(final Result lockDurations, final Queryable<?> updateAccess, final Queryable<?> updateIndirectAccess) {
-      fields = new TLongObjectHashMap<Set<LockId>>();
       locks = new ThreadLocks(lockDurations);
-      instances = new TLongObjectHashMap<TLongObjectHashMap<Set<LockId>>>();
-      staticCounts = new HashMap<StaticInstance, StaticCount>();
-      counts = new HashMap<FieldInstance, Count>();
       this.updateAccess = updateAccess;
       this.updateIndirectAccess = updateIndirectAccess;
     }
@@ -230,11 +226,10 @@ public class LockSetAnalysis implements IPostPrep {
       final Queryable<Void> insertFieldLockSets = q.prepared("LockSet.v2.insertFieldLockSets");
       final Queryable<Void> insertInstanceLockSets = q.prepared("LockSet.v2.insertInstanceLockSets");
       log.fine("Static field lock sets.");
-      fields.forEachEntry(new TLongObjectProcedure<Set<LockId>>() {
+      fields.forEach(new LongObjectProcedure<Set<LockId>>() {
         int count = 0;
 
-        @Override
-        public boolean execute(final long field, final Set<LockId> locks) {
+        public void apply(long field, Set<LockId> locks) {
           for (final Iterator<LockId> it = locks.iterator(); it.hasNext();) {
             LockId lock = it.next();
             insertFieldLockSets.call(field, lock.getId(), lock.getType().getFlag());
@@ -242,21 +237,18 @@ public class LockSetAnalysis implements IPostPrep {
               commit();
             }
           }
-          return true;
         }
       });
       log.fine("Instance lock sets.");
-      instances.forEachEntry(new TLongObjectProcedure<TLongObjectHashMap<Set<LockId>>>() {
+      instances.forEach(new LongObjectProcedure<LongObjectMap<Set<LockId>>>() {
         int count;
 
-        @Override
-        public boolean execute(final long field, final TLongObjectHashMap<Set<LockId>> instance) {
-          final Set<LockId> fieldSet = new HashSet<LockId>();
-          instance.forEachEntry(new TLongObjectProcedure<Set<LockId>>() {
+        public void apply(final long field, LongObjectMap<Set<LockId>> instance) {
+          final Set<LockId> fieldSet = new HashSet<>();
+          instance.forEach(new LongObjectProcedure<Set<LockId>>() {
             boolean first = true;
 
-            @Override
-            public boolean execute(final long receiver, final Set<LockId> instanceSet) {
+            public void apply(long receiver, Set<LockId> instanceSet) {
               if (first) {
                 fieldSet.addAll(instanceSet);
                 first = false;
@@ -270,7 +262,6 @@ public class LockSetAnalysis implements IPostPrep {
               if (++count % 10000 == 0) {
                 commit();
               }
-              return true;
             }
           });
           for (final Iterator<LockId> it = fieldSet.iterator(); it.hasNext();) {
@@ -280,7 +271,6 @@ public class LockSetAnalysis implements IPostPrep {
               commit();
             }
           }
-          return true;
         }
       });
 
@@ -334,7 +324,7 @@ public class LockSetAnalysis implements IPostPrep {
       final List<LockId> lockSet = locks.getLocks(thread);
       updateAccess.call(id, lockSet.size(), Nulls.coerce(locks.getLastAcquisition(thread)));
       if (fieldSet == null) {
-        fieldSet = new HashSet<LockId>(lockSet.size());
+        fieldSet = new HashSet<>(lockSet.size());
         fieldSet.addAll(lockSet);
         fields.put(field, fieldSet);
       } else {
@@ -390,16 +380,16 @@ public class LockSetAnalysis implements IPostPrep {
     void instanceAccess(final long id, final Timestamp ts, final long thread, final long field, final long receiver,
         final boolean read) {
       locks.ensureTime(ts);
-      TLongObjectHashMap<Set<LockId>> fieldMap = instances.get(field);
+      LongObjectMap<Set<LockId>> fieldMap = instances.get(field);
       if (fieldMap == null) {
-        fieldMap = new TLongObjectHashMap<Set<LockId>>();
+        fieldMap = new LongObjectScatterMap<>();
         instances.put(field, fieldMap);
       }
       Set<LockId> instance = fieldMap.get(receiver);
       final List<LockId> lockSet = locks.getLocks(thread);
       updateAccess.call(id, lockSet.size(), Nulls.coerce(locks.getLastAcquisition(thread)));
       if (instance == null) {
-        instance = new HashSet<LockId>();
+        instance = new HashSet<>();
         instance.addAll(lockSet);
         fieldMap.put(receiver, instance);
       } else {
@@ -520,19 +510,19 @@ public class LockSetAnalysis implements IPostPrep {
    */
   private static class ThreadLocks {
     private final Iterator<Row> locks;
-    private final TLongObjectHashMap<TreeSet<Lock>> threads;
+    private final LongObjectMap<TreeSet<Lock>> threads;
     private final TreeSet<Lock> activeLocks;
     private Lock lock;
 
     ThreadLocks(final Result lockDurations) {
       locks = lockDurations.iterator();
-      activeLocks = new TreeSet<Lock>(new Comparator<Lock>() {
+      activeLocks = new TreeSet<>(new Comparator<Lock>() {
         @Override
         public int compare(final Lock o1, final Lock o2) {
           return o1.end.compareTo(o2.end);
         }
       });
-      threads = new TLongObjectHashMap<TreeSet<Lock>>();
+      threads = new LongObjectScatterMap<>();
     }
 
     /**
@@ -543,7 +533,7 @@ public class LockSetAnalysis implements IPostPrep {
      */
     public List<LockId> getLocks(final long thread) {
       final Collection<Lock> set = getThreadSet(thread);
-      final List<LockId> locks = new ArrayList<LockId>(set.size());
+      final List<LockId> locks = new ArrayList<>(set.size());
       for (final Lock l : set) {
         locks.add(l.lock);
       }
@@ -610,7 +600,7 @@ public class LockSetAnalysis implements IPostPrep {
     private TreeSet<Lock> getThreadSet(final long id) {
       TreeSet<Lock> threadSet = threads.get(id);
       if (threadSet == null) {
-        threadSet = new TreeSet<Lock>(new Comparator<Lock>() {
+        threadSet = new TreeSet<>(new Comparator<Lock>() {
           @Override
           public int compare(final Lock o1, final Lock o2) {
             return o1.start.compareTo(o2.start);

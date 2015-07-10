@@ -1,13 +1,14 @@
 package com.surelogic.flashlight.common.prep;
 
-import gnu.trove.map.hash.TLongLongHashMap;
-import gnu.trove.set.hash.TLongHashSet;
-
 import java.util.logging.Level;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
+import com.carrotsearch.hppc.LongLongMap;
+import com.carrotsearch.hppc.LongLongScatterMap;
+import com.carrotsearch.hppc.LongScatterSet;
+import com.carrotsearch.hppc.LongSet;
 import com.surelogic._flashlight.common.AttributeType;
 import com.surelogic._flashlight.common.IdConstants;
 import com.surelogic._flashlight.common.PreppedAttributes;
@@ -48,14 +49,14 @@ public final class ScanRawFilePreScan extends AbstractDataScan {
         return f_endTime;
     }
 
-    private final TLongHashSet f_synthetics = new TLongHashSet();
+    private final LongSet f_synthetics = new LongScatterSet();
 
     /**
      * Returns the full set of synthetic fields.
      *
      * @return
      */
-    public TLongHashSet getSynthetics() {
+    public LongSet getSynthetics() {
         return f_synthetics;
     }
 
@@ -69,7 +70,7 @@ public final class ScanRawFilePreScan extends AbstractDataScan {
         return f_synthetics.contains(field);
     }
 
-    private final TLongLongHashMap f_rwLocks = new TLongLongHashMap();
+    private final LongLongMap f_rwLocks = new LongLongScatterMap();
 
     /**
      * Returns the lock id, given the locked object. These id's may be the same,
@@ -86,11 +87,11 @@ public final class ScanRawFilePreScan extends AbstractDataScan {
     /*
      * Collection of static fields accessed by multiple threads
      */
-    private final TLongHashSet f_usedStatics = new TLongHashSet();
+    private final LongSet f_usedStatics = new LongScatterSet();
     /*
      * Field -> Thread
      */
-    private final TLongLongHashMap f_currentStatics = new TLongLongHashMap();
+    private final LongLongMap f_currentStatics = new LongLongScatterMap();
 
     private long f_maxReceiverId;
 

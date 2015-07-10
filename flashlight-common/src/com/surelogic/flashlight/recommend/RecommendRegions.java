@@ -1,9 +1,5 @@
 package com.surelogic.flashlight.recommend;
 
-import gnu.trove.list.array.TLongArrayList;
-import gnu.trove.procedure.TLongProcedure;
-import gnu.trove.set.hash.TLongHashSet;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -11,6 +7,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import com.carrotsearch.hppc.LongArrayList;
+import com.carrotsearch.hppc.LongHashSet;
+import com.carrotsearch.hppc.LongScatterSet;
+import com.carrotsearch.hppc.LongSet;
+import com.carrotsearch.hppc.procedures.LongProcedure;
 import com.surelogic.common.derby.sqlfunctions.Trace;
 import com.surelogic.common.jdbc.DBQuery;
 import com.surelogic.common.jdbc.Query;
@@ -87,10 +88,10 @@ public final class RecommendRegions {
 
     @Override
     public List<RecommendedRegion> handle(final Result result) {
-      final List<RecommendedRegion> regions = new ArrayList<RecommendedRegion>();
+      final List<RecommendedRegion> regions = new ArrayList<>();
       RecommendedRegion region = null;
-      TLongHashSet ls = null;
-      TLongHashSet fs = null;
+      LongSet ls = null;
+      LongSet fs = null;
       for (final Row r : result) {
         final String p = r.nextString();
         final String c = r.nextString();
@@ -109,8 +110,8 @@ public final class RecommendRegions {
             // FIXME performance
             region.getRequiresLockMethods().addAll(traces(ls, fs).perform(q));
           }
-          fs = new TLongHashSet();
-          ls = new TLongHashSet();
+          fs = new LongScatterSet();
+          ls = new LongScatterSet();
           region = new RecommendedRegion(p, c, l, lIsS);
           regions.add(region);
         }
@@ -136,12 +137,12 @@ public final class RecommendRegions {
    * @param fieldId
    * @return
    */
-  static DBQuery<Set<MethodLoc>> traces(final TLongHashSet locks, final TLongHashSet fields) {
+  static DBQuery<Set<MethodLoc>> traces(final LongSet locks, final LongSet fields) {
     return new DBQuery<Set<MethodLoc>>() {
       @Override
       public Set<MethodLoc> perform(final Query q) {
         final long ms = System.currentTimeMillis();
-        final Set<MethodLoc> methods = new HashSet<MethodLoc>();
+        final Set<MethodLoc> methods = new HashSet<>();
         /*
          * The trace algorithm works like this.
          * 
@@ -156,44 +157,37 @@ public final class RecommendRegions {
          * methods that require a lock
          */
         final Queryable<long[]> lockTracesQ = q.prepared("Flashlight.Region.lockTraces", new LongResultHandler());
-        final TLongHashSet lockTraceIds = new TLongHashSet();
-        locks.forEach(new TLongProcedure() {
-          @Override
-          public boolean execute(final long lockId) {
-            lockTraceIds.addAll(lockTracesQ.call(lockId));
-            return true;
+        final LongSet lockTraceIds = new LongScatterSet();
+        locks.forEach(new LongProcedure() {
+          public void apply(final long lockId) {
+            for (long l : lockTracesQ.call(lockId)) {
+              lockTraceIds.add(l);
+            }
           }
         });
-
-        final List<List<Trace>> lockTraces = new ArrayList<List<Trace>>();
-        lockTraceIds.forEach(new TLongProcedure() {
-          @Override
-          public boolean execute(final long l) {
+        final List<List<Trace>> lockTraces = new ArrayList<>();
+        lockTraceIds.forEach(new LongProcedure() {
+          public void apply(final long l) {
             final List<Trace> lockTrace = Trace.stackTrace(l).perform(q);
             Collections.reverse(lockTrace);
             lockTraces.add(lockTrace);
-            return true;
           }
         });
 
         final Queryable<long[]> fieldTracesQ = q.prepared("Flashlight.Region.fieldTraces", new LongResultHandler());
-        final TLongHashSet fieldTraceIds = new TLongHashSet();
-        fields.forEach(new TLongProcedure() {
-          @Override
-          public boolean execute(final long fieldId) {
+        final LongHashSet fieldTraceIds = new LongScatterSet();
+        fields.forEach(new LongProcedure() {
+          public void apply(final long fieldId) {
             fieldTraceIds.addAll(fieldTracesQ.call(fieldId));
-            return true;
           }
         });
 
-        final List<List<Trace>> fieldTraces = new ArrayList<List<Trace>>();
-        fieldTraceIds.forEach(new TLongProcedure() {
-          @Override
-          public boolean execute(final long f) {
+        final List<List<Trace>> fieldTraces = new ArrayList<>();
+        fieldTraceIds.forEach(new LongProcedure() {
+          public void apply(final long f) {
             final List<Trace> fieldTrace = Trace.stackTrace(f).perform(q);
             Collections.reverse(fieldTrace);
             fieldTraces.add(fieldTrace);
-            return true;
           }
         });
         System.out.println(String.format("Locks: %s\nFields: %s", lockTraces.size(), fieldTraces.size()));
@@ -230,7 +224,7 @@ public final class RecommendRegions {
 
     @Override
     public long[] handle(final Result result) {
-      final TLongArrayList lst = new TLongArrayList();
+      final LongArrayList lst = new LongArrayList();
       for (final Row r : result) {
         lst.add(r.nextLong());
       }

@@ -4,22 +4,22 @@ import com.surelogic.flashlight.common.LockType;
 
 public final class AfterIntrinsicLockWait extends Lock {
 
-    public AfterIntrinsicLockWait(final IntrinsicLockDurationRowInserter i) {
-        super(i);
-    }
+  public AfterIntrinsicLockWait(final IntrinsicLockDurationRowInserter i) {
+    super(i);
+  }
 
-    @Override
-    public String getXMLElementName() {
-        return "after-intrinsic-lock-wait";
-    }
+  @Override
+  public String getXMLElementName() {
+    return "after-intrinsic-lock-wait";
+  }
 
-    @Override
-    protected LockState getState() {
-        return LockState.AFTER_WAIT;
-    }
+  @Override
+  protected LockState getState() {
+    return LockState.AFTER_WAIT;
+  }
 
-    @Override
-    protected LockType getType() {
-        return LockType.INTRINSIC;
-    }
+  @Override
+  protected LockType getType() {
+    return LockType.INTRINSIC;
+  }
 }

@@ -84,8 +84,8 @@ public class HTMLBuilder {
 
     public Head(final String title) {
       this.title = title;
-      links = new ArrayList<Link>();
-      scripts = new ArrayList<Script>();
+      links = new ArrayList<>();
+      scripts = new ArrayList<>();
     }
 
     public Head script(final Script s) {
@@ -174,8 +174,8 @@ public class HTMLBuilder {
   }
 
   abstract static class Container {
-    private final List<BodyNode> nodes = new ArrayList<BodyNode>();
-    private final List<String> classes = new ArrayList<String>();
+    private final List<BodyNode> nodes = new ArrayList<>();
+    private final List<String> classes = new ArrayList<>();
     private String id;
 
     abstract String getContainerName();
@@ -282,9 +282,9 @@ public class HTMLBuilder {
   public abstract static class HTMLList {
     abstract String getListName();
 
-    private final List<String> classes = new ArrayList<String>();
+    private final List<String> classes = new ArrayList<>();
     private String id;
-    private final List<LI> items = new ArrayList<LI>();
+    private final List<LI> items = new ArrayList<>();
 
     public HTMLList clazz(final String clazz) {
       classes.add(clazz);
@@ -368,11 +368,11 @@ public class HTMLBuilder {
   }
 
   static class Table implements BodyNode {
-    private final List<String> classes = new ArrayList<String>();
-    private final List<Cell> cellTypes = new ArrayList<Cell>();
+    private final List<String> classes = new ArrayList<>();
+    private final List<Cell> cellTypes = new ArrayList<>();
     private String id;
     private Row header;
-    private final List<Row> rows = new ArrayList<Row>();;
+    private final List<Row> rows = new ArrayList<>();;
     private Row footer;
 
     public Table clazz(final String clazz) {
@@ -445,7 +445,7 @@ public class HTMLBuilder {
   }
 
   static class Row implements HTMLNode {
-    private final List<Col> cols = new ArrayList<Col>();
+    private final List<Col> cols = new ArrayList<>();
     private final List<Cell> inherited;
 
     Row(final List<Cell> inherited) {

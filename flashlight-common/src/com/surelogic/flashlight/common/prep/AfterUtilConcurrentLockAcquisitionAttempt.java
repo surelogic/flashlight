@@ -7,28 +7,27 @@ import com.surelogic.flashlight.common.LockType;
 
 public final class AfterUtilConcurrentLockAcquisitionAttempt extends Lock {
 
-    public AfterUtilConcurrentLockAcquisitionAttempt(
-            final IntrinsicLockDurationRowInserter i) {
-        super(i);
-    }
+  public AfterUtilConcurrentLockAcquisitionAttempt(final IntrinsicLockDurationRowInserter i) {
+    super(i);
+  }
 
-    @Override
-    public String getXMLElementName() {
-        return "after-util-concurrent-lock-acquisition-attempt";
-    }
+  @Override
+  public String getXMLElementName() {
+    return "after-util-concurrent-lock-acquisition-attempt";
+  }
 
-    @Override
-    protected LockState getState() {
-        return LockState.AFTER_ACQUISITION;
-    }
+  @Override
+  protected LockState getState() {
+    return LockState.AFTER_ACQUISITION;
+  }
 
-    @Override
-    protected LockType getType() {
-        return LockType.UTIL;
-    }
+  @Override
+  protected LockType getType() {
+    return LockType.UTIL;
+  }
 
-    @Override
-    protected Boolean isSuccess(PreppedAttributes attr) {
-        return attr.getBoolean(GOT_LOCK);
-    }
+  @Override
+  protected Boolean isSuccess(PreppedAttributes attr) {
+    return attr.getBoolean(GOT_LOCK);
+  }
 }

@@ -3,10 +3,10 @@ package com.surelogic._flashlight.common;
 import java.util.HashMap;
 import java.util.Map;
 
-//public class PreppedAttributes extends TreeMap<IAttributeType,Object> {
 public class PreppedAttributes extends HashMap<IAttributeType, Object> {
   private static final long serialVersionUID = 2176197907020676264L;
   private static final Map<String, IAttributeType> xmlMap = new HashMap<String, IAttributeType>();
+
   static {
     for (final FlagType f : FlagType.values()) {
       if (xmlMap.put(f.label(), f) != null) {
@@ -41,8 +41,8 @@ public class PreppedAttributes extends HashMap<IAttributeType, Object> {
     final Object o = this.get(key);
     if (o == null) {
       /*
-       * if (key != AttributeType.TYPE) {
-       * System.out.println("No value for "+key); }
+       * if (key != AttributeType.TYPE) { System.out.println("No value for "
+       * +key); }
        */
       return Long.MIN_VALUE;
     }

@@ -9,15 +9,14 @@ import com.surelogic.common.jobs.SLProgressMonitor;
 
 public class LockIsClassPostPrep implements IPostPrep {
 
-    @Override
-    public String getDescription() {
-        return "Adding lock is class information.";
-    }
+  @Override
+  public String getDescription() {
+    return "Adding lock is class information.";
+  }
 
-    @Override
-    public void doPostPrep(Connection c, SchemaData schema,
-            SLProgressMonitor mon) throws SQLException {
-        new ConnectionQuery(c).prepared("Flashlight.LockIsClass").call();
-    }
+  @Override
+  public void doPostPrep(Connection c, SchemaData schema, SLProgressMonitor mon) throws SQLException {
+    new ConnectionQuery(c).prepared("Flashlight.LockIsClass").call();
+  }
 
 }

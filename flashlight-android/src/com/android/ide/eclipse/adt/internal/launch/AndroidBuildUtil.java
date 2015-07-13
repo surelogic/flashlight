@@ -453,7 +453,7 @@ public class AndroidBuildUtil {
     return data;
   }
 
-  static String getRuntimeJarPath() {
+  public static String getRuntimeJarPath() {
     final File bundleBase = EclipseUtility.getInstallationDirectoryOf(SchemaResources.PLUGIN_ID);
     if (bundleBase != null) {
       final File jarLocation = new File(bundleBase, SchemaResources.RUNTIME_JAR);

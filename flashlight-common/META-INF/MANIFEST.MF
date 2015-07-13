@@ -17,7 +17,7 @@ Export-Package: com.surelogic._flashlight.common,
  com.surelogic.flashlight.doc,
  com.surelogic.flashlight.recommend,
  com.surelogic.flashlight.schema
-Bundle-ClassPath: lib/flashlight-rewriter.jar,
- lib/jgrapht-core-0.9.1.jar,
- .
+Bundle-ClassPath: .,
+ lib/runtime/flashlight-rewriter.jar,
+ lib/runtime/jgrapht-core-0.9.1.jar
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7

@@ -12,8 +12,7 @@ public final class SchemaResources {
 
   public static final String PLUGIN_ID = "com.surelogic.flashlight.common";
 
-  public static final String PATH = "/lib/";
-  public static final String ADHOC_PATH = "/lib/adhoc/";
+  public static final String ADHOC_PATH = "/lib/runtime/adhoc/";
 
   public static final String FLASHLIGHT_QUERIES = "default-flashlight-queries.xml";
   public static final String FLASHLIGHT_QUERIES_PATH = ADHOC_PATH + FLASHLIGHT_QUERIES;

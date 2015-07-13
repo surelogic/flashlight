@@ -7,25 +7,22 @@ import com.surelogic.common.jdbc.AbstractSchemaData;
 import com.surelogic.common.license.SLLicenseProduct;
 
 public class FlashlightSchemaData extends AbstractSchemaData {
-	public FlashlightSchemaData() {
-		super("com.surelogic.flashlight.schema",
-			  Thread.currentThread().getContextClassLoader(),
-			  SLLicenseProduct.FLASHLIGHT);
-	}
+  public FlashlightSchemaData() {
+    super("com.surelogic.flashlight.schema", Thread.currentThread().getContextClassLoader(), SLLicenseProduct.FLASHLIGHT);
+  }
 
-	@Override
-  protected Object newInstance(String qname) 
-	throws InstantiationException, IllegalAccessException, ClassNotFoundException {
-		return loader.loadClass(qname).newInstance();
-	}
-	
-	@Override
+  @Override
+  protected Object newInstance(String qname) throws InstantiationException, IllegalAccessException, ClassNotFoundException {
+    return loader.loadClass(qname).newInstance();
+  }
+
+  @Override
   public URL getSchemaResource(final String name) {
-		return loader.getResource(getSchemaResourcePath(name));
-	}
+    return loader.getResource(getSchemaResourcePath(name));
+  }
 
-	@Override
+  @Override
   protected InputStream getResourceAsStream(String path) {
-		return loader.getResourceAsStream(path);
-	}
+    return loader.getResourceAsStream(path);
+  }
 }

@@ -29,7 +29,7 @@ public class EmptyQueriesCache {
     // singleton
   }
 
-  private Map<RunDescription, Set<String>> f_runToEmptyQueries = new HashMap<RunDescription, Set<String>>();
+  private Map<RunDescription, Set<String>> f_runToEmptyQueries = new HashMap<>();
 
   public boolean queryResultWillBeEmpty(RunDirectory runDirectory, AdHocQuery query) {
     if (runDirectory == null || query == null)
@@ -57,7 +57,7 @@ public class EmptyQueriesCache {
     if (!emptyQueriesFile.exists())
       return;
 
-    final Set<String> emptyQueries = new HashSet<String>();
+    final Set<String> emptyQueries = new HashSet<>();
     try {
       final BufferedReader in = new BufferedReader(new FileReader(emptyQueriesFile));
       String id;

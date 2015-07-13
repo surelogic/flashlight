@@ -58,8 +58,8 @@ public final class RawFileHandles {
   }
 
   /**
-   * Gets a reference to the first checkpoint data file (number 0). This is useful
-   * to read its prefix.
+   * Gets a reference to the first checkpoint data file (number 0). This is
+   * useful to read its prefix.
    * 
    * @return a reference to the first checkpoint data file (number 0).
    */
@@ -69,14 +69,15 @@ public final class RawFileHandles {
   }
 
   /**
-   * Gets a copy of the list of checkpoint data files ordered from 0 to <i>n</i>.
+   * Gets a copy of the list of checkpoint data files ordered from 0 to <i>n</i>
+   * .
    * 
    * @return a copy of the list of checkpoint data files ordered from 0 to
    *         <i>n</i>. May be empty.
    */
   @NonNull
   public ArrayList<File> getOrderedListOfCheckpointFiles() {
-    final ArrayList<File> result = new ArrayList<File>();
+    final ArrayList<File> result = new ArrayList<>();
     for (File f : f_checkpoints)
       result.add(f);
     return result;

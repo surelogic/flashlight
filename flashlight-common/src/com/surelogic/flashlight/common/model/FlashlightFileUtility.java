@@ -198,7 +198,7 @@ public final class FlashlightFileUtility {
      * This will detect raw files being modified, the prep subdirectory is
      * ignored.
      */
-    final Set<String> ignore = new HashSet<String>();
+    final Set<String> ignore = new HashSet<>();
     ignore.add(PREP_DIRNAME);
     final boolean modifiedRecently = FileUtility.anythingModifiedInTheLast(directory, 6, TimeUnit.SECONDS, ignore);
     // System.out.println("isDoneCollectingDataInto: modified files in last 6 s (except /prep) = "
@@ -238,7 +238,7 @@ public final class FlashlightFileUtility {
       }
     }
     if (lastCheckpoint != null) {
-      return new Pair<File, Integer>(lastCheckpoint, lastCheckpointNum);
+      return new Pair<>(lastCheckpoint, lastCheckpointNum);
     } else {
       return null;
     }
@@ -370,7 +370,7 @@ public final class FlashlightFileUtility {
         return OutputType.mayBeRawDataFile(pathname);
       }
     };
-    final ArrayList<File> rawFiles = new ArrayList<File>();
+    final ArrayList<File> rawFiles = new ArrayList<>();
     for (File raw : directory.listFiles(flashlightRawDataFileFilter)) {
       rawFiles.add(raw);
     }
@@ -434,7 +434,7 @@ public final class FlashlightFileUtility {
   private static final class RawDataDirectoryReader {
 
     @NonNull
-    private final Map<RunDescription, RunDirectory> f_runToHandles = new HashMap<RunDescription, RunDirectory>();
+    private final Map<RunDescription, RunDirectory> f_runToHandles = new HashMap<>();
 
     @NonNull
     private final File f_dataDir;

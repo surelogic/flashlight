@@ -11,15 +11,15 @@ import java.io.IOException;
  * 
  */
 public interface JValue {
-	/**
-	 * Append the value to the given {@link StringBuilder}. Depth is a hint as
-	 * to how far the value should be tabbed over. Implementors of append do not
-	 * need to add tabs to the first line of their value, but should take the
-	 * hint into account for any additional lines needed to display the value.
-	 * 
-	 * @param builder
-	 * @param depth
-	 */
-	void append(Appendable builder, int depth) throws IOException;
+  /**
+   * Append the value to the given {@link StringBuilder}. Depth is a hint as to
+   * how far the value should be tabbed over. Implementors of append do not need
+   * to add tabs to the first line of their value, but should take the hint into
+   * account for any additional lines needed to display the value.
+   * 
+   * @param builder
+   * @param depth
+   */
+  void append(Appendable builder, int depth) throws IOException;
 
 }

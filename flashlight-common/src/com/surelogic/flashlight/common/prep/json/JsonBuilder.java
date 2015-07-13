@@ -13,52 +13,52 @@ import java.util.List;
  */
 public final class JsonBuilder extends JsonContainer<JsonBuilder> {
 
-	private final List<Def> defs = new ArrayList<Def>();
+  private final List<Def> defs = new ArrayList<>();
 
-	public <T extends Appendable> T build(final T b) throws IOException {
-		for (Def def : defs) {
-			if (!def.name.contains(".")) {
-				b.append("var ");
-			} else {
-				// Not a top level assignment, so we don't want to declare it as
-				// a var
-			}
-			b.append(def.name);
-			b.append(" = ");
-			def.val.append(b, 0);
-			b.append(";\n");
-		}
-		return b;
-	}
+  public <T extends Appendable> T build(final T b) throws IOException {
+    for (Def def : defs) {
+      if (!def.name.contains(".")) {
+        b.append("var ");
+      } else {
+        // Not a top level assignment, so we don't want to declare it as
+        // a var
+      }
+      b.append(def.name);
+      b.append(" = ");
+      def.val.append(b, 0);
+      b.append(";\n");
+    }
+    return b;
+  }
 
-	public String build() {
-		StringBuilder b = new StringBuilder();
-		try {
-			build(b);
-		} catch (IOException e1) {
-			// Do nothing, never really gets thrown
-		}
-		return b.toString();
-	}
+  public String build() {
+    StringBuilder b = new StringBuilder();
+    try {
+      build(b);
+    } catch (IOException e1) {
+      // Do nothing, never really gets thrown
+    }
+    return b.toString();
+  }
 
-	private static class Def {
-		public Def(final String name, final JValue val) {
-			this.name = name;
-			this.val = val;
-		}
+  private static class Def {
+    public Def(final String name, final JValue val) {
+      this.name = name;
+      this.val = val;
+    }
 
-		String name;
-		JValue val;
-	}
+    String name;
+    JValue val;
+  }
 
-	@Override
-	void addVal(final String name, final JValue val) {
-		defs.add(new Def(name, val));
-	}
+  @Override
+  void addVal(final String name, final JValue val) {
+    defs.add(new Def(name, val));
+  }
 
-	@Override
-	JsonBuilder builder() {
-		return this;
-	}
+  @Override
+  JsonBuilder builder() {
+    return this;
+  }
 
 }

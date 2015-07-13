@@ -7,6 +7,9 @@ Bundle-Vendor: SureLogic, Inc.
 Require-Bundle: com.surelogic.common,
  org.junit
 Export-Package: com.surelogic._flashlight.common,
+ com.surelogic._flashlight.rewriter,
+ com.surelogic._flashlight.rewriter.config,
+ com.surelogic._flashlight.rewriter.xml,
  com.surelogic.flashlight.common,
  com.surelogic.flashlight.common.jobs,
  com.surelogic.flashlight.common.model,
@@ -14,7 +17,9 @@ Export-Package: com.surelogic._flashlight.common,
  com.surelogic.flashlight.common.prep.json,
  com.surelogic.flashlight.doc,
  com.surelogic.flashlight.recommend,
- com.surelogic.flashlight.schema
-Bundle-ClassPath: lib/jgrapht-jdk1.6.jar,
+ com.surelogic.flashlight.schema,
+ org.jgrapht
+Bundle-ClassPath: lib/flashlight-rewriter.jar,
+ lib/jgrapht-core-0.9.1.jar,
  .
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7

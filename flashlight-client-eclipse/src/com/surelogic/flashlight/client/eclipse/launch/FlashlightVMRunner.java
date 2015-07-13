@@ -132,9 +132,9 @@ public final class FlashlightVMRunner implements IVMRunner {
     // Get the path to the flashlight-runtime.jar
     final File bundleBase = EclipseUtility.getInstallationDirectoryOf(SchemaResources.PLUGIN_ID);
     if (bundleBase != null) {
-      final String name = "lib/flashlight-runtime.jar";
-      final File jarLocation = new File(bundleBase, name);
+      final File jarLocation = new File(bundleBase, SchemaResources.RUNTIME_JAR);
       pathToFlashlightLib = jarLocation.getAbsolutePath();
+      System.out.println("RUNTIME path: " + pathToFlashlightLib);
     } else {
       throw new CoreException(SLEclipseStatusUtility.createErrorStatus(0,
           "No bundle location (null returned) found for the Flashlight common plug-in:" + SchemaResources.PLUGIN_ID));

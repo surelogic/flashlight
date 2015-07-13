@@ -456,8 +456,7 @@ public class AndroidBuildUtil {
   static String getRuntimeJarPath() {
     final File bundleBase = EclipseUtility.getInstallationDirectoryOf(SchemaResources.PLUGIN_ID);
     if (bundleBase != null) {
-      final String name = "lib/flashlight-runtime.jar";
-      final File jarLocation = new File(bundleBase, name);
+      final File jarLocation = new File(bundleBase, SchemaResources.RUNTIME_JAR);
       return jarLocation.getAbsolutePath();
     } else {
       throw new IllegalStateException(

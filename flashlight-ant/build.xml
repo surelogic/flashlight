@@ -1,4 +1,109 @@
-<project name="flashlight-ant" default="build-jars">
+<project name="flashlight-ant" default="build-ant-task">
+
+	<description>Build for SL Ant tasks</description>
+
+	<property name="build" location="${basedir}/build" />
+	<property name="build.lib" location="${build}/lib" />
+	<property name="build.bin" location="${build}/bin" />
+
+	<!-- plugin locations (git layout) -->
+	<property name="common" location="${basedir}/../../common/common" />
+	<property name="flashlight-common" location="${basedir}/../flashlight-common" />
+
+	<!-- Trying to determine the release version from the common plug-in -->
+	<!-- Hack that reads the "Bundle-Version: 5.2.2.qualifier" line to come up with "5.2.2" -->
+	<loadfile property="release-version" srcFile="${common}/META-INF/MANIFEST.MF">
+		<filterchain>
+			<linecontains>
+				<contains value="Bundle-Version:" />
+			</linecontains>
+			<striplinebreaks />
+			<deletecharacters chars="Bundle-Version: qualifier" />
+			<tokenfilter>
+				<replaceregex pattern="\.$" replace="" flags="g" />
+			</tokenfilter>
+		</filterchain>
+	</loadfile>
+
+	<!-- destination identifiers -->
+	<property name="flashlight-ant.id" value="flashlight-ant-${release-version}" />
+
+	<target name="build-ant-task">
+		<echo>Cleaning up for Flashlight Ant task build</echo>
+		<delete quiet="true" dir="${build}" />
+		<mkdir dir="${build}" />
+		<mkdir dir="${build.lib}" />
+		<mkdir dir="${build.bin}" />
+
+		<echo>Copy runtime Jars from needed projects (might be needed for compile)</echo>
+		<copy todir="${build.lib}/runtime">
+			<fileset dir="${common}/lib/runtime">
+				<include name="*.jar" />
+			</fileset>
+			<fileset dir="${flashlight-common}/lib/runtime">
+				<include name="*.jar" />
+			</fileset>
+		</copy>
+
+		<path id="compile.class.path">
+			<fileset dir="${build.lib}">
+				<include name="**/*.jar" />
+			</fileset>
+		</path>
+
+		<echo>Creating generated source code and compiling 'common' project</echo>
+		<ant antfile="build-src.xml" dir="${common}" inheritAll="false" />
+		<javac srcdir="${common}/src" debug="true" destdir="${build.bin}" classpathref="compile.class.path" source="1.7" target="1.7" includeAntRuntime="false" />
+		<copy todir="${build.bin}">
+			<fileset dir="${common}/src">
+				<exclude name="**/*.java" />
+				<exclude name="**/.gitignore" />
+			</fileset>
+		</copy>
+		<jar destfile="${build.lib}/common-${release-version}.jar" basedir="${build.bin}" />
+		<delete quiet="true" dir="${build.bin}" />
+		<mkdir dir="${build.bin}" />
+
+		<echo>Creating generated source code and compiling 'flashlight-common' project</echo>
+		<javac srcdir="${flashlight-common}/src" debug="true" destdir="${build.bin}" classpathref="compile.class.path" source="1.7" target="1.7" includeAntRuntime="false" />
+		<copy todir="${build.bin}">
+			<fileset dir="${flashlight-common}/src">
+				<exclude name="**/*.java" />
+				<exclude name="**/.gitignore" />
+			</fileset>
+		</copy>
+		<jar destfile="${build.lib}/flashlight-common-${release-version}.jar" basedir="${build.bin}" />
+		<delete quiet="true" dir="${build.bin}" />
+		<mkdir dir="${build.bin}" />
+
+		<echo>Creating generated source code and compiling 'flashlight-ant' project</echo>
+		<javac srcdir="${basedir}/src" debug="true" destdir="${build.bin}" classpathref="compile.class.path" source="1.7" target="1.7" includeAntRuntime="false" />
+		<copy todir="${build.bin}">
+			<fileset dir="${basedir}/src">
+				<exclude name="**/*.java" />
+				<exclude name="**/.gitignore" />
+			</fileset>
+		</copy>
+		<jar destfile="${build.lib}/flashlight-ant-${release-version}.jar" basedir="${build.bin}" />
+		<delete quiet="true" dir="${build.bin}" />
+
+		<echo>Creating TXT files for the release</echo>
+		<echo file="${build}/flashlight-ant-version.txt">${release-version}</echo>
+		<copy file="./README.txt" tofile="${build}/README.txt" />
+
+		<echo>Creating jsure-ant-${release-version}.jar</echo>
+		<zip destfile="${build}/flashlight-ant-${release-version}.zip">
+			<zipfileset dir="${build.lib}" prefix="flashlight-ant/lib" />
+			<zipfileset dir="${build}" includes="*.txt" prefix="flashlight-ant" />
+		</zip>
+		<delete quiet="true" dir="${build.lib}" />
+		<delete quiet="true">
+			<fileset dir="${build}">
+				<include name="*.txt" />
+			</fileset>
+		</delete>
+	</target>
+
 
 	<property environment="env" />
 
@@ -6,22 +111,22 @@
 	<property name="lib" value="${basedir}/lib" />
 	<property name="classes" value="${basedir}/bin" />
 
-	<property name="flashlight-rewriter-jar" value="../flashlight-instrumentation/build//flashlight-rewriter.jar"/>	
-	<property name="flashlight-instrumentation-project-classes" value="../flashlight-instrumentation/build/bin"/>
-    <property name="flashlight-instrumentation-runtime" value="../flashlight-instrumentation/build/bin/flashlight-runtime.jar"/>
-    <property name="flashlight-common-project-classes" value="../flashlight-common/bin"/>
-    <property name="common-project-classes" value="../../common/common/bin"/>
-    <property name="common-project-runtime" value="../../common/common/lib/runtime"/>
+	<property name="flashlight-rewriter-jar" value="../flashlight-instrumentation/build//flashlight-rewriter.jar" />
+	<property name="flashlight-instrumentation-project-classes" value="../flashlight-instrumentation/build/bin" />
+	<property name="flashlight-instrumentation-runtime" value="../flashlight-instrumentation/build/bin/flashlight-runtime.jar" />
+	<property name="flashlight-common-project-classes" value="../flashlight-common/bin" />
+	<property name="common-project-classes" value="../../common/common/bin" />
+	<property name="common-project-runtime" value="../../common/common/lib/runtime" />
 	<property name="ant.jar" value="${common-project-runtime}/ant-1.9.6.jar" />
 
-	<property name="antlib.xml" value="com/surelogic/flashlight/ant/antlib.xml"/>
-	
+	<property name="antlib.xml" value="com/surelogic/flashlight/ant/antlib.xml" />
+
 	<property name="flashlight-ant.zip" value="${basedir}/../flashlight-common/lib/flashlight-ant.zip" />
 	<property name="flashlight-ant.jar" value="${basedir}/flashlight-ant.jar" />
 	<property name="flashlight-ant.jar.manifest" value="${lib}/ANT-MANIFEST.MF" />
 
 	<target name="clean">
-		<delete file="${flashlight-ant.jar}"/>
+		<delete file="${flashlight-ant.jar}" />
 	</target>
 
 	<target name="compile">
@@ -31,9 +136,9 @@
 			<src path="${src}" />
 			<classpath>
 				<pathelement location="${ant.jar}" />
-				<pathelement location="${flashlight-instrumentation-project-classes}"/>
-				<pathelement location="${flashlight-common-project-classes}"/>
-				<pathelement location="${common-project-classes}"/>
+				<pathelement location="${flashlight-instrumentation-project-classes}" />
+				<pathelement location="${flashlight-common-project-classes}" />
+				<pathelement location="${common-project-classes}" />
 			</classpath>
 		</javac>
 	</target>
@@ -41,33 +146,32 @@
 	<target name="build-ant-jar">
 		<!-- Make sure the antlib.xml file is in the output directory so it is
 		     placed in the final flashlight-ant.jar file. -->
-		<copy file="${src}/${antlib.xml}"
-				tofile="${classes}/${antlib.xml}"/>
+		<copy file="${src}/${antlib.xml}" tofile="${classes}/${antlib.xml}" />
 		<!-- (1) Include the contents of this project (flashlight-ant) -->
 		<jar destfile="${flashlight-ant.jar}">
 			<manifest>
-			  <attribute name="Manifest-Version" value="1.0"/>
-				<attribute name="Class-Path" value=""/>
+				<attribute name="Manifest-Version" value="1.0" />
+				<attribute name="Class-Path" value="" />
 			</manifest>
-			<fileset dir="${classes}"/>
+			<fileset dir="${classes}" />
 			<!-- (2) Include the contents of common -->
-			<fileset dir="${common-project-classes}"/>
+			<fileset dir="${common-project-classes}" />
 			<!-- (3) Include the contents of flashlight-common -->
- 		    <fileset dir="${flashlight-common-project-classes}"/>
-		    <zipfileset src="${common-project-runtime}/commons-lang3-3.4.jar" />
+			<fileset dir="${flashlight-common-project-classes}" />
+			<zipfileset src="${common-project-runtime}/commons-lang3-3.4.jar" />
 			<zipfileset src="${common-project-runtime}/asm-5.0.4.jar" />
-            <zipfileset src="${common-project-runtime}/asm-commons-5.0.4.jar" />
-            <zipfileset src="${common-project-runtime}/asm-tree-5.0.4.jar" />
+			<zipfileset src="${common-project-runtime}/asm-commons-5.0.4.jar" />
+			<zipfileset src="${common-project-runtime}/asm-tree-5.0.4.jar" />
 			<zipfileset src="${flashlight-rewriter-jar}" />
 		</jar>
 		<zip destfile="${flashlight-ant.zip}">
-		    <zipfileset prefix="flashlight-ant" file="README.txt"/>
+			<zipfileset prefix="flashlight-ant" file="README.txt" />
 			<zipfileset prefix="flashlight-ant/lib" file="${flashlight-ant.jar}" />
 			<zipfileset prefix="flashlight-ant/lib" file="${flashlight-instrumentation-runtime}" />
 		</zip>
 	</target>
 
-    <target name="build-jars" depends="compile, build-ant-jar" />
+	<target name="build-jars" depends="compile, build-ant-jar" />
 
 	<target name="build-jars-eclipse" depends="build-ant-jar" />
 </project>

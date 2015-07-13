@@ -9,7 +9,7 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 
 import com.surelogic.common.ui.dialogs.DialogUtility;
-import com.surelogic.flashlight.common.LibResources;
+import com.surelogic.flashlight.client.eclipse.LibResources;
 
 public class SaveHtmlDocsAction implements IWorkbenchWindowActionDelegate {
 

@@ -148,7 +148,7 @@ public class WatchFlashlightMonitorJob extends AbstractSLJob {
                     "Potential Deadlocks");
             for (final String line : orderingResults) {
                 final String[] split = LOCK_EDGE_DELIM.split(line);
-                final List<String> edge = new ArrayList<String>(
+                final List<String> edge = new ArrayList<>(
                         split.length - 1);
                 for (int i = 1; i < split.length; i++) {
                     edge.add(split[i]);
@@ -218,7 +218,7 @@ public class WatchFlashlightMonitorJob extends AbstractSLJob {
      */
     public static List<String> readUpTo(final BufferedReader reader,
             final String marker) throws IOException {
-        final List<String> lines = new ArrayList<String>();
+        final List<String> lines = new ArrayList<>();
         String line;
         for (line = reader.readLine(); line != null && !line.startsWith(marker); line = reader
                 .readLine()) {

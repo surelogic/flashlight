@@ -30,7 +30,7 @@ IWorkbenchWindowActionDelegate {
     @Override
     public void run(final IAction action) {
         ClassLoader l = Thread.currentThread().getContextClassLoader();
-        List<URL> tutorials = new ArrayList<URL>();
+        List<URL> tutorials = new ArrayList<>();
 
         /*
          * Basic Flashlight tutorial projects.

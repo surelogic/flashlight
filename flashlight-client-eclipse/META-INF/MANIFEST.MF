@@ -22,17 +22,9 @@ Require-Bundle: com.surelogic.common,
  org.eclipse.ltk.ui.refactoring
 Eclipse-LazyStart: true
 Bundle-ActivationPolicy: lazy
-Bundle-ClassPath: .,
- lib/flashlight-rewriter.jar
+Bundle-ClassPath: .
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
-Export-Package: com.surelogic._flashlight.rewriter;
-  x-friends:="com.surelogic.flashlight.android,
-   com.surelogic.flashlight.client.eclipse,
-   com.surelogic.jsure.client.eclipse,
-   com.surelogic.sierra.client.eclipse",
- com.surelogic._flashlight.rewriter.config,
- com.surelogic._flashlight.rewriter.xml,
- com.surelogic.flashlight.client.eclipse,
+Export-Package: com.surelogic.flashlight.client.eclipse,
  com.surelogic.flashlight.client.eclipse.actions,
  com.surelogic.flashlight.client.eclipse.dialogs,
  com.surelogic.flashlight.client.eclipse.jobs,

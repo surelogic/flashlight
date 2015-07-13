@@ -30,10 +30,10 @@ import com.surelogic.common.ui.jobs.SLUIJob;
 import com.surelogic.flashlight.client.eclipse.Activator;
 import com.surelogic.flashlight.client.eclipse.model.RunManager;
 import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
-import com.surelogic.flashlight.common.LibResources;
 import com.surelogic.flashlight.common.jobs.JobConstants;
 import com.surelogic.flashlight.common.model.EmptyQueriesCache;
 import com.surelogic.flashlight.common.model.RunDirectory;
+import com.surelogic.flashlight.schema.SchemaResources;
 
 public final class FlashlightDataSource extends AdHocManagerAdapter implements IAdHocDataSource, ILifecycle {
 
@@ -91,7 +91,7 @@ public final class FlashlightDataSource extends AdHocManagerAdapter implements I
   }
 
   public URL getDefaultQueryUrl() {
-    return LibResources.getDefaultQueryUrl();
+    return SchemaResources.getDefaultQueryUrl();
   }
 
   public void badQuerySaveFileNotification(final Exception e) {
@@ -215,7 +215,7 @@ public final class FlashlightDataSource extends AdHocManagerAdapter implements I
 
   @Nullable
   public URL getQuerydocImageURL(String imageName) {
-    return LibResources.getQuerydocImageURL(imageName);
+    return SchemaResources.getQuerydocImageURL(imageName);
   }
 
   @NonNull

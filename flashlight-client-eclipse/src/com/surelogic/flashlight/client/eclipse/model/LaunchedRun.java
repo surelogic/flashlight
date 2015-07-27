@@ -71,7 +71,7 @@ public final class LaunchedRun {
   }
 
   @NonNull
-  private final AtomicReference<RunState> f_state = new AtomicReference<RunState>(RunState.INSTRUMENTATION_AND_LAUNCH);
+  private final AtomicReference<RunState> f_state = new AtomicReference<>(RunState.INSTRUMENTATION_AND_LAUNCH);
 
   @NonNull
   public RunState getState() {
@@ -126,7 +126,7 @@ public final class LaunchedRun {
     return f_state.getAndSet(value);
   }
 
-  private final AtomicReference<SLJobTracker> f_prepTracker = new AtomicReference<SLJobTracker>();
+  private final AtomicReference<SLJobTracker> f_prepTracker = new AtomicReference<>();
 
   @Nullable
   public SLJobTracker getPrepareJobTracker() {

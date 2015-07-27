@@ -113,7 +113,7 @@ public final class RunManager implements ILifecycle {
   }
 
   @Vouch("AnnotationBounds")
-  private final CopyOnWriteArraySet<IRunManagerObserver> f_observers = new CopyOnWriteArraySet<IRunManagerObserver>();
+  private final CopyOnWriteArraySet<IRunManagerObserver> f_observers = new CopyOnWriteArraySet<>();
 
   public void addObserver(final IRunManagerObserver o) {
     if (o == null) {
@@ -225,7 +225,7 @@ public final class RunManager implements ILifecycle {
    */
 
   @UniqueInRegion("RunState")
-  final LinkedList<LaunchedRun> f_launchedRuns = new LinkedList<LaunchedRun>();
+  final LinkedList<LaunchedRun> f_launchedRuns = new LinkedList<>();
 
   /**
    * Gets an ordered list of runs launched during this Eclipse session. The list
@@ -239,7 +239,7 @@ public final class RunManager implements ILifecycle {
   @NonNull
   public ArrayList<LaunchedRun> getLaunchedRuns() {
     synchronized (f_lock) {
-      return new ArrayList<LaunchedRun>(f_launchedRuns);
+      return new ArrayList<>(f_launchedRuns);
     }
   }
 
@@ -545,7 +545,7 @@ public final class RunManager implements ILifecycle {
    * the same elements as {@link #f_preparedRunDirectories}.
    */
   @UniqueInRegion("RunState")
-  final Set<RunDirectory> f_collectionCompletedRunDirectories = new HashSet<RunDirectory>();
+  final Set<RunDirectory> f_collectionCompletedRunDirectories = new HashSet<>();
 
   /**
    * Holds the set of all run directories that have completed data collection
@@ -560,7 +560,7 @@ public final class RunManager implements ILifecycle {
    * elements as {@link #f_preparedRunDirectories}.
    */
   @UniqueInRegion("RunState")
-  final Set<RunDirectory> f_preparedRunDirectories = new HashSet<RunDirectory>();
+  final Set<RunDirectory> f_preparedRunDirectories = new HashSet<>();
 
   /**
    * Gets the set of all run directories that have completed data collection.
@@ -575,7 +575,7 @@ public final class RunManager implements ILifecycle {
   @NonNull
   public Set<RunDirectory> getCollectionCompletedRunDirectories() {
     synchronized (f_lock) {
-      return new HashSet<RunDirectory>(f_collectionCompletedRunDirectories);
+      return new HashSet<>(f_collectionCompletedRunDirectories);
     }
   }
 
@@ -589,7 +589,7 @@ public final class RunManager implements ILifecycle {
    */
   @NonNull
   public RunDirectory[] getCollectionCompletedRunDirectoriesForUI() {
-    final ArrayList<RunDirectory> result = new ArrayList<RunDirectory>(getCollectionCompletedRunDirectories());
+    final ArrayList<RunDirectory> result = new ArrayList<>(getCollectionCompletedRunDirectories());
     Collections.sort(result, new Comparator<RunDirectory>() {
       public int compare(RunDirectory o1, RunDirectory o2) {
         if (o1 == null || o2 == null)
@@ -671,7 +671,7 @@ public final class RunManager implements ILifecycle {
   @NonNull
   public Set<RunDirectory> getPreparedRunDirectories() {
     synchronized (f_lock) {
-      return new HashSet<RunDirectory>(f_preparedRunDirectories);
+      return new HashSet<>(f_preparedRunDirectories);
     }
   }
 
@@ -690,7 +690,7 @@ public final class RunManager implements ILifecycle {
    */
   @NonNull
   public Set<RunDirectory> getCollectionCompletedRunDirectoriesNotPreparedOrBeingPrepared() {
-    final Set<RunDirectory> result = new HashSet<RunDirectory>();
+    final Set<RunDirectory> result = new HashSet<>();
     synchronized (f_lock) {
       for (RunDirectory runDir : f_collectionCompletedRunDirectories) {
         if (!runDir.isPrepared() && !isBeingPrepared(runDir)) {
@@ -803,14 +803,14 @@ public final class RunManager implements ILifecycle {
       throw new IllegalArgumentException(I18N.err(44, "run"));
     }
 
-    List<RunDirectory> runs = new ArrayList<RunDirectory>();
+    List<RunDirectory> runs = new ArrayList<>();
     runs.add(run);
     prepareAll(runs);
   }
 
   @NonNull
   static Set<RunDescription> getRunDescriptionsFor(Set<RunDirectory> runs) {
-    final Set<RunDescription> result = new HashSet<RunDescription>(runs.size());
+    final Set<RunDescription> result = new HashSet<>(runs.size());
     for (RunDirectory runDir : runs) {
       result.add(runDir.getDescription());
     }
@@ -862,7 +862,7 @@ public final class RunManager implements ILifecycle {
         boolean collectionCompletedRunDirectoryChange = false;
         boolean preparedDataChanged = false;
         boolean launchedRunChange = false;
-        List<RunDirectory> prepare = new ArrayList<RunDirectory>();
+        List<RunDirectory> prepare = new ArrayList<>();
 
         /*
          * Search the run directory for runs that have completed data
@@ -874,9 +874,9 @@ public final class RunManager implements ILifecycle {
         if (monitor.isCanceled())
           return SLStatus.CANCEL_STATUS;
 
-        final Set<RunDescription> collectionCompleted = new HashSet<RunDescription>();
-        final Collection<RunDirectory> preparedDirs = new ArrayList<RunDirectory>();
-        final Set<RunDescription> prepared = new HashSet<RunDescription>();
+        final Set<RunDescription> collectionCompleted = new HashSet<>();
+        final Collection<RunDirectory> preparedDirs = new ArrayList<>();
+        final Set<RunDescription> prepared = new HashSet<>();
         for (final RunDirectory dir : collectionCompletedDirs) {
           final RunDescription desc = dir.getDescription();
           collectionCompleted.add(desc);

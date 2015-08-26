@@ -23,6 +23,7 @@ abstract class CombinationEnumerator<E> {
 
   CombinationEnumerator(Collection<E> elems) {
     len = elems.size();
+    this.elems.addAll(elems);
   }
 
   public void enumerate() {

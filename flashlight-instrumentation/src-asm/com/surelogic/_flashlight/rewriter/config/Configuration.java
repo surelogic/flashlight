@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.surelogic._flashlight.common.LaunchType;
 import com.surelogic._flashlight.rewriter.FlashlightNames;
 
 public final class Configuration {
@@ -156,6 +157,8 @@ public final class Configuration {
 	 */
 	public final Set<String> filterPackages;
 
+	public final LaunchType launchType;
+
 	/* Use ConfigurationBuilder to make an instance */
 	Configuration(final String storeClassName,
 			final boolean indirectUseDefault,
@@ -181,7 +184,8 @@ public final class Configuration {
 			final boolean instrumentAfterUnlock,
 			final boolean instrumentIndirectAccess,
 			final Set<String> classBlacklist, final FieldFilter filterFields,
-			final Set<String> filterFieldsInPackages) {
+			final Set<String> filterFieldsInPackages, final LaunchType type) {
+		this.launchType = type;
 		this.storeClassName = storeClassName;
 		this.indirectUseDefault = indirectUseDefault;
 		this.indirectAdditionalMethods = indirectAdditionalMethods;

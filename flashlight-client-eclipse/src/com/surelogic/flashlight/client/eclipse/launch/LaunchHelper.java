@@ -12,6 +12,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.jface.preference.IPreferenceStore;
 
+import com.surelogic._flashlight.common.LaunchType;
 import com.surelogic._flashlight.rewriter.config.Configuration.FieldFilter;
 import com.surelogic._flashlight.rewriter.config.ConfigurationBuilder;
 import com.surelogic.common.core.logging.SLEclipseStatusUtility;
@@ -166,6 +167,7 @@ public final class LaunchHelper {
         } else {
             configBuilder = new ConfigurationBuilder(flashlightProps);
         }
+        configBuilder.setLaunchType(LaunchType.JAVA);
         try {
             configBuilder
                     .setIndirectUseDefault(launch

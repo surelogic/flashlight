@@ -1331,7 +1331,7 @@ public abstract class RewriteManager {
         if (happensBeforeFile != null && happensBeforeFile.exists()) {
             hbc.parse(happensBeforeFile);
         }
-        happensBefore = new HappensBeforeTable(hbc, classModel, messenger);
+        happensBefore = new HappensBeforeTable(config.launchType, hbc, classModel, messenger);
 
         /* Second pass: Instrument the classfiles */
         PrintWriter sitesOut = null;

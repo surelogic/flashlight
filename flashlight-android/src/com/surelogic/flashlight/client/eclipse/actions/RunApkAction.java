@@ -58,6 +58,7 @@ import com.android.sdklib.AndroidVersion;
 import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.internal.avd.AvdInfo;
 import com.surelogic._flashlight.common.InstrumentationConstants;
+import com.surelogic._flashlight.common.LaunchType;
 import com.surelogic._flashlight.rewriter.InstrumentationFileTranslator;
 import com.surelogic._flashlight.rewriter.PrintWriterMessenger;
 import com.surelogic._flashlight.rewriter.RewriteManager;
@@ -238,7 +239,7 @@ public class RunApkAction implements IWorkbenchWindowActionDelegate {
 
   static Configuration buildConfiguration() {
     ConfigurationBuilder c = new ConfigurationBuilder();
-
+    c.setLaunchType(LaunchType.ANDROID);
     return c.getConfiguration();
   }
 

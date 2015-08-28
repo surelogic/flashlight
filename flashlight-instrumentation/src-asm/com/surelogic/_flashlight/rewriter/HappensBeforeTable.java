@@ -8,8 +8,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.security.auth.callback.LanguageCallback;
+
 import com.surelogic._flashlight.common.HappensBeforeConfig;
 import com.surelogic._flashlight.common.HappensBeforeConfig.HappensBeforeRule;
+import com.surelogic._flashlight.common.LaunchType;
 import com.surelogic._flashlight.rewriter.ClassAndFieldModel.ClassNotFoundException;
 import com.surelogic._flashlight.rewriter.ClassAndFieldModel.Clazz;
 
@@ -30,10 +33,11 @@ final class HappensBeforeTable {
   private final Map<String, List<Record>> callInMethodMap =
       new HashMap<String, List<Record>>();
   
+  private final LaunchType launchType;
   
-  
-  public HappensBeforeTable(final HappensBeforeConfig config,
+  public HappensBeforeTable(final LaunchType type, final HappensBeforeConfig config,
       final ClassAndFieldModel m, final RewriteMessenger messenger) {
+	launchType = type;
     classModel = m;
     add(config.getObjects(), messenger);
     add(config.getThreads(), messenger);
@@ -57,6 +61,11 @@ final class HappensBeforeTable {
         try {
           records.add(new Record(hb));
         } catch (final ClassNotFoundException ex) {
+          // Suppress warnings that aren't applicable
+          if (launchType != LaunchType.ANDROID && hb.getQualifiedClass().startsWith("android.")) {
+        	continue;
+          }          
+          
           /* Couldn't find the class that contains the happens-before method,
            * so we output a warning, and skip it. 
            */

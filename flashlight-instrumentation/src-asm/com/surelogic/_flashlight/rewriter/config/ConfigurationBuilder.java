@@ -8,6 +8,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.StringTokenizer;
 
+import com.surelogic._flashlight.common.LaunchType;
 import com.surelogic._flashlight.rewriter.config.Configuration.FieldFilter;
 
 public final class ConfigurationBuilder {
@@ -55,7 +56,7 @@ public final class ConfigurationBuilder {
   private FieldFilter fieldFilter;
   private Set<String> filterPackages;
 
-  
+  private LaunchType launchType;
   
   /**
    * Initialize the configuration base on the system default values.
@@ -275,7 +276,7 @@ public final class ConfigurationBuilder {
         instrumentAfterCall, instrumentBeforeWait, instrumentAfterWait,
         instrumentBeforeJUCLock, instrumentAfterLock, instrumentAfterTryLock,
         instrumentAfterUnlock, instrumentIndirectAccess, classBlacklist,
-        fieldFilter, filterPackages);
+        fieldFilter, filterPackages, launchType);
   }
 
   
@@ -418,5 +419,9 @@ public final class ConfigurationBuilder {
   
   public void addToFilterPackages(final String pack) {
     filterPackages.add(pack);
+  }
+  
+  public void setLaunchType(LaunchType t) {
+	launchType = t;
   }
 }

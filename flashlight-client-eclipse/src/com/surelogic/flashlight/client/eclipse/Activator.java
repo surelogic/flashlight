@@ -14,7 +14,6 @@ import org.osgi.framework.BundleContext;
 import com.surelogic.common.FileUtility;
 import com.surelogic.common.core.EclipseUtility;
 import com.surelogic.common.core.logging.SLEclipseStatusUtility;
-import com.surelogic.common.license.SLLicenseProduct;
 import com.surelogic.common.ui.DialogTouchNotificationUI;
 import com.surelogic.flashlight.client.eclipse.model.RunManager;
 import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferencesUtility;
@@ -79,8 +78,6 @@ public class Activator extends AbstractUIPlugin {
      */
     final File dataDir = EclipseUtility.getFlashlightDataDirectory();
     FileUtility.ensureDirectoryExists(dataDir);
-
-    EclipseUtility.getProductReleaseDateJob(SLLicenseProduct.FLASHLIGHT, this).schedule();
   }
 
   @Override

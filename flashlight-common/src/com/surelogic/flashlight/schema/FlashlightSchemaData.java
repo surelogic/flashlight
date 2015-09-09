@@ -4,11 +4,10 @@ import java.io.InputStream;
 import java.net.URL;
 
 import com.surelogic.common.jdbc.AbstractSchemaData;
-import com.surelogic.common.license.SLLicenseProduct;
 
 public class FlashlightSchemaData extends AbstractSchemaData {
   public FlashlightSchemaData() {
-    super("com.surelogic.flashlight.schema", Thread.currentThread().getContextClassLoader(), SLLicenseProduct.FLASHLIGHT);
+    super("com.surelogic.flashlight.schema", Thread.currentThread().getContextClassLoader());
   }
 
   @Override

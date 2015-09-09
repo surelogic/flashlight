@@ -52,8 +52,6 @@ import com.surelogic.common.FileUtility;
 import com.surelogic.common.core.EclipseUtility;
 import com.surelogic.common.core.logging.SLEclipseStatusUtility;
 import com.surelogic.common.i18n.I18N;
-import com.surelogic.common.license.SLLicenseProduct;
-import com.surelogic.common.license.SLLicenseUtility;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.common.ui.EclipseUIUtility;
 import com.surelogic.flashlight.android.jobs.ReadFlashlightStreamJob;
@@ -99,13 +97,9 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends LaunchConfigur
   @Override
   public void launch(final ILaunchConfiguration configuration, final String mode, final ILaunch launch,
       final IProgressMonitor monitor) throws CoreException {
-    if (!SLLicenseUtility.validate(SLLicenseProduct.FLASHLIGHT_ANDROID)) {
-      return;
-    }
-
     InstrumentedAndroidLaunch androidLaunch = (InstrumentedAndroidLaunch) launch;
-    IProject project = EclipseUtility.getProject(configuration
-        .getAttribute(IJavaLaunchConfigurationConstants.ATTR_PROJECT_NAME, ""));
+    IProject project = EclipseUtility
+        .getProject(configuration.getAttribute(IJavaLaunchConfigurationConstants.ATTR_PROJECT_NAME, ""));
     if (project == null) {
       AdtPlugin.printErrorToConsole("Couldn't get project object!");
       androidLaunch.stopLaunch();
@@ -176,12 +170,9 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends LaunchConfigur
         // This shouldn't happen, but it's better to let the user know
         // in case it does.
         if (connections == -1 || restarts == -1) {
-          AdtPlugin.printErrorToConsole(
-              project,
-              "The connection to adb is down, and a severe error has occured.",
-              "You must restart adb and Eclipse.",
-              String.format("Please ensure that adb is correctly located at '%1$s' and can be executed.",
-                  AdtPlugin.getOsAbsoluteAdb()));
+          AdtPlugin.printErrorToConsole(project, "The connection to adb is down, and a severe error has occured.",
+              "You must restart adb and Eclipse.", String.format(
+                  "Please ensure that adb is correctly located at '%1$s' and can be executed.", AdtPlugin.getOsAbsoluteAdb()));
           return;
         }
 
@@ -546,8 +537,8 @@ public class FlashlightAndroidLaunchConfigurationDelegate extends LaunchConfigur
         new ConnectToProjectJob(data, pakkage, timeout - 1).schedule(1000);
         return Status.OK_STATUS;
       } else {
-        return SLEclipseStatusUtility.createInfoStatus(String.format("Could not locate the device hosting %s",
-            data.project.getName()));
+        return SLEclipseStatusUtility
+            .createInfoStatus(String.format("Could not locate the device hosting %s", data.project.getName()));
       }
     }
   }

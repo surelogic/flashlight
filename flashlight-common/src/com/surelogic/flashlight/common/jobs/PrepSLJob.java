@@ -164,7 +164,8 @@ public final class PrepSLJob extends AbstractSLJob {
     /*
      * License check
      */
-    final SLStatus failed = SLLicenseUtility.validateSLJob(SLLicenseProduct.FLASHLIGHT, monitor);
+    final SLLicenseProduct product = f_runDirectory.isAndroid() ? SLLicenseProduct.FLASHLIGHT_ANDROID : SLLicenseProduct.FLASHLIGHT;
+    final SLStatus failed = SLLicenseUtility.validateSLJob(product, monitor);
     if (failed != null) {
       return failed;
     }

@@ -31,8 +31,6 @@ import com.android.ide.eclipse.adt.internal.launch.LaunchMessages;
 import com.android.ide.eclipse.adt.internal.launch.RunId;
 import com.android.ide.eclipse.adt.internal.launch.junit.runtime.AndroidJUnitLaunchInfo;
 import com.android.ide.eclipse.adt.internal.project.BaseProjectHelper;
-import com.surelogic.common.license.SLLicenseProduct;
-import com.surelogic.common.license.SLLicenseUtility;
 
 public class FlashlightAndroidJUnitLaunchConfigurationDelegate extends FlashlightAndroidLaunchConfigurationDelegate {
 
@@ -50,9 +48,6 @@ public class FlashlightAndroidJUnitLaunchConfigurationDelegate extends Flashligh
   protected String doLaunch(final ILaunchConfiguration configuration, final String mode, final IProgressMonitor monitor,
       final IProject project, final InstrumentedAndroidLaunch androidLaunch, final AndroidLaunchConfiguration config,
       final AndroidLaunchController controller, final IFile applicationPackage, final ManifestData manifestData) {
-    if (!SLLicenseUtility.validate(SLLicenseProduct.FLASHLIGHT_ANDROID)) {
-      return null;
-    }
     String runner = getRunner(project, configuration, manifestData);
     if (runner == null) {
       AdtPlugin.displayError(LaunchMessages.LaunchDialogTitle,
@@ -208,9 +203,9 @@ public class FlashlightAndroidJUnitLaunchConfigurationDelegate extends Flashligh
         AdtPlugin.printErrorToConsole(project, String.format(LaunchMessages.AndroidJUnitDelegate_NoRunnerConfigMsg_s, runner));
         return runner;
       }
-      AdtPlugin.printErrorToConsole(project, String.format(LaunchMessages.AndroidJUnitDelegate_NoRunnerConsoleMsg_4s,
-          project.getName(), SdkConstants.CLASS_INSTRUMENTATION_RUNNER, AdtConstants.LIBRARY_TEST_RUNNER,
-          SdkConstants.FN_ANDROID_MANIFEST_XML));
+      AdtPlugin.printErrorToConsole(project,
+          String.format(LaunchMessages.AndroidJUnitDelegate_NoRunnerConsoleMsg_4s, project.getName(),
+              SdkConstants.CLASS_INSTRUMENTATION_RUNNER, AdtConstants.LIBRARY_TEST_RUNNER, SdkConstants.FN_ANDROID_MANIFEST_XML));
       return null;
     } catch (CoreException e) {
       AdtPlugin.log(e, "Error when retrieving instrumentation info"); //$NON-NLS-1$

@@ -49,8 +49,7 @@ IWorkbenchWindowActionDelegate {
             tutorials.add(l
                     .getResource("/lib/FlashlightTutorial_CounterRace.zip"));
         }
-
-        tutorials.add(l.getResource("/lib/FlashlightTutorial_Maven.zip"));
+        //tutorials.add(l.getResource("/lib/FlashlightTutorial_Maven.zip"));
         
         InstallTutorialProjectsDialog
         .open(EclipseUIUtility.getShell(), CommonImages.IMG_FL_LOGO,

@@ -106,10 +106,12 @@
 			<menu id="com.surelogic.flashlight.client.eclipse.workbenchMenu"
 				label="Flashlight" path="additions">
 				<groupMarker name="client" />
+				<separator name="io" />
 				<separator name="android" />
 				<separator name="jsure" />
 				<separator name="service" />
 				<separator name="license" />
+				<separator name="additions" />
 			</menu>
 			<action
 				class="com.surelogic.flashlight.client.eclipse.actions.RunApkAction"

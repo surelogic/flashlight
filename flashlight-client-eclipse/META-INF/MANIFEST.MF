@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: Flashlight Client
 Bundle-SymbolicName: com.surelogic.flashlight.client.eclipse;singleton:=true
 Bundle-Vendor: SureLogic, Inc.
-Bundle-Version: 5.6.1.qualifier
+Bundle-Version: 5.7.0.qualifier
 Bundle-Activator: com.surelogic.flashlight.client.eclipse.Activator
 Bundle-Localization: plugin
 Require-Bundle: com.surelogic.common,

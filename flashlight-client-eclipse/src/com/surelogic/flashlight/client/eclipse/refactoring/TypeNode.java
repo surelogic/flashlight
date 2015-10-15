@@ -12,10 +12,10 @@ import java.util.Map;
 import com.surelogic.common.ref.*;
 
 public class TypeNode implements Comparable<TypeNode> {
-    final List<TypeNode> children = new ArrayList<TypeNode>();
+    final List<TypeNode> children = new ArrayList<>();
     final String type;
     final IDeclType ctx;
-    final Map<String, List<IDeclFunction>> methods = new HashMap<String, List<IDeclFunction>>();
+    final Map<String, List<IDeclFunction>> methods = new HashMap<>();
 
     TypeNode(final String name, final IDeclType context) {
         type = name;
@@ -25,12 +25,12 @@ public class TypeNode implements Comparable<TypeNode> {
     void computeNames(final String prefix, final Map<String, TypeNode> typeMap) {
         typeMap.put(prefix, this);
         Collections.sort(children);
-        final List<List<TypeNode>> pChildren = new ArrayList<List<TypeNode>>();
+        final List<List<TypeNode>> pChildren = new ArrayList<>();
         List<TypeNode> sChildren = null;
         String last = null;
         for (final TypeNode child : children) {
             if (!child.type.equals(last)) {
-                sChildren = new ArrayList<TypeNode>();
+                sChildren = new ArrayList<>();
                 pChildren.add(sChildren);
                 last = child.type;
             }
@@ -53,7 +53,7 @@ public class TypeNode implements Comparable<TypeNode> {
     void addMethod(final String name, final IDeclFunction m) {
         List<IDeclFunction> list = methods.get(name);
         if (list == null) {
-            list = new ArrayList<IDeclFunction>();
+            list = new ArrayList<>();
             methods.put(name, list);
         }
         list.add(m);

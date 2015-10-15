@@ -28,8 +28,8 @@ import com.surelogic.flashlight.recommend.RecommendedRegion;
  * 
  */
 public class RegionModel implements Iterable<RecommendedRegion> {
-    Map<String, Set<RecommendedRegion>> regions = new HashMap<String, Set<RecommendedRegion>>();
-    Map<String, RecommendedRegion> fields = new HashMap<String, RecommendedRegion>();
+    Map<String, Set<RecommendedRegion>> regions = new HashMap<>();
+    Map<String, RecommendedRegion> fields = new HashMap<>();
 
     /**
      * Merge the given region with this model. For convenience, region may be
@@ -56,7 +56,7 @@ public class RegionModel implements Iterable<RecommendedRegion> {
         }
         // If we don't have a similarly named one, claim any fields that haven't
         // been claimed yet
-        final List<FieldLoc> regionFields = new ArrayList<FieldLoc>();
+        final List<FieldLoc> regionFields = new ArrayList<>();
         for (final FieldLoc field : region.getFields()) {
             if (!fields.containsKey(fieldId(region, field))) {
                 regionFields.add(field);
@@ -95,7 +95,7 @@ public class RegionModel implements Iterable<RecommendedRegion> {
 
     @Override
     public Iterator<RecommendedRegion> iterator() {
-        final Set<RecommendedRegion> set = new HashSet<RecommendedRegion>();
+        final Set<RecommendedRegion> set = new HashSet<>();
         for (final Set<RecommendedRegion> subset : regions.values()) {
             set.addAll(subset);
         }
@@ -113,7 +113,7 @@ public class RegionModel implements Iterable<RecommendedRegion> {
 
     public Set<AnnotationDescription> generateAnnotations(
             final Map<String, TypeNode> typeMap, final NamingScheme ns) {
-        final Set<AnnotationDescription> set = new HashSet<AnnotationDescription>();
+        final Set<AnnotationDescription> set = new HashSet<>();
         for (final RecommendedRegion r : this) {
             final TypeNode node = typeMap.get(r.getClazz());
             if (node != null) {

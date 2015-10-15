@@ -147,7 +147,7 @@ public final class JumpToCode extends AdHocManagerAdapter {
        * Determine the preference to jump to a line a field declaration or a
        * method declaration.
        */
-      final LinkedList<Strategy> strategy = new LinkedList<Strategy>();
+      final LinkedList<Strategy> strategy = new LinkedList<>();
       final String prefer = variableValues.get("JumpToCodePreference");
       if ("method".equalsIgnoreCase(prefer)) {
         strategy.add(Strategy.METHOD);

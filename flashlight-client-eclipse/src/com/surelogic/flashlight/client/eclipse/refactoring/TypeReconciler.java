@@ -31,7 +31,7 @@ import com.surelogic.common.ui.refactor.EastDeclFactory;
 public class TypeReconciler extends ASTVisitor {
 	private final String ROOT = "ROOT";
 
-	private final LinkedList<TypeNode> names = new LinkedList<TypeNode>();
+	private final LinkedList<TypeNode> names = new LinkedList<>();
 
 	/**
 	 * Return a map of all observed type names, and their respective type
@@ -41,7 +41,7 @@ public class TypeReconciler extends ASTVisitor {
 	 */
 	public Map<String, TypeNode> typeMap() {
 		final TypeNode root = names.getFirst();
-		final Map<String, TypeNode> typeMap = new HashMap<String, TypeNode>();
+		final Map<String, TypeNode> typeMap = new HashMap<>();
 		if (ROOT.equals(root.type)) {
 			for (final TypeNode t : root.children) {
 				t.computeNames(t.type, typeMap);

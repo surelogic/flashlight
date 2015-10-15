@@ -57,8 +57,8 @@ import com.surelogic.flashlight.client.eclipse.preferences.FlashlightPreferences
 
 public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
 
-  private TimingSource f_ts;
-  private Graph f_graph;
+  TimingSource f_ts;
+  Graph f_graph;
 
   /**
    * This field controls what edge is selected in the displayed graph. The graph
@@ -66,7 +66,7 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
    * has to happen.
    */
   @Nullable
-  private Pair<String, String> f_selectedEdge;
+  Pair<String, String> f_selectedEdge;
 
   /**
    * This method sets the selected row in the result to the first row it finds
@@ -125,7 +125,7 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
       return null;
     final AdornedTreeTableModel model = getResult().getModel();
     final Cell[][] rows = model.getRows();
-    final Pair<String, String> edge = new Pair<String, String>(getEncHeld(rows[rowIdx]), getEncAcquired(rows[rowIdx]));
+    final Pair<String, String> edge = new Pair<>(getEncHeld(rows[rowIdx]), getEncAcquired(rows[rowIdx]));
     return edge;
   }
 
@@ -212,13 +212,13 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
     final AdHocQueryResultSqlData result = getResult();
     final AdornedTreeTableModel model = result.getModel();
     final Cell[][] cells = model.getRows();
-    final Set<Pair<String, String>> edges = new HashSet<Pair<String, String>>();
+    final Set<Pair<String, String>> edges = new HashSet<>();
     for (Cell[] row : cells) {
       /*
        * We encode I or U as the type in front of the object name. For example,
        * IObject-43 or UReentrantReadWriteLock-1843
        */
-      final Pair<String, String> pair = new Pair<String, String>(getEncHeld(row), getEncAcquired(row));
+      final Pair<String, String> pair = new Pair<>(getEncHeld(row), getEncAcquired(row));
       edges.add(pair);
     }
 
@@ -353,20 +353,19 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
   /*
    * This class handles events for the graph.
    */
-  private final class CanvasEventHandler extends MouseAdapter implements MouseMoveListener, PaintListener,
-      TimingSource.TickListener {
+  final class CanvasEventHandler extends MouseAdapter implements MouseMoveListener, PaintListener, TimingSource.TickListener {
 
-    private final Canvas f_canvas;
-    private final Image f_lock = SLImages.getImage(CommonImages.IMG_LOCK);
-    private final Image f_dyLock = SLImages.getImage(CommonImages.IMG_LOCK_DYNAMIC);
-    private final Graph f_graph;
+    final Canvas f_canvas;
+    final Image f_lock = SLImages.getImage(CommonImages.IMG_LOCK);
+    final Image f_dyLock = SLImages.getImage(CommonImages.IMG_LOCK_DYNAMIC);
+    final Graph f_graph;
 
-    private volatile boolean f_tracking = false;
+    volatile boolean f_tracking = false;
 
     @ThreadConfined
-    private Node f_trackingNode = null;
+    Node f_trackingNode = null;
     @ThreadConfined
-    private int f_x, f_y;
+    int f_x, f_y;
 
     public CanvasEventHandler(Canvas canvas, Graph graph) {
       f_canvas = canvas;
@@ -446,8 +445,8 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
       try {
         path.moveTo(cFrom.x, cFrom.y);
         path.quadTo(ctrl.x, ctrl.y, cTo.x, cTo.y);
-        gc.setForeground(highlight ? EclipseColorUtility.getDiffHighlightColorNewChanged() : gc.getDevice().getSystemColor(
-            SWT.COLOR_LIST_BACKGROUND));
+        gc.setForeground(highlight ? EclipseColorUtility.getDiffHighlightColorNewChanged()
+            : gc.getDevice().getSystemColor(SWT.COLOR_LIST_BACKGROUND));
         if (highlight) {
           final int saved = gc.getLineWidth();
           gc.setLineWidth(3);
@@ -477,8 +476,8 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
       // rotate 90 degrees around 0,0: x' = -y and y' = x
       final Point arrow2 = new Point(midPath.x - (arrow1.y - midPath.y), midPath.y + (arrow1.x - midPath.x));
 
-      gc.setBackground(highlight ? EclipseColorUtility.getDiffHighlightColorNewChanged() : gc.getDevice().getSystemColor(
-          SWT.COLOR_LIST_BACKGROUND));
+      gc.setBackground(highlight ? EclipseColorUtility.getDiffHighlightColorNewChanged()
+          : gc.getDevice().getSystemColor(SWT.COLOR_LIST_BACKGROUND));
       // gc.drawLine(midPath.x, midPath.y, arrow1.x, arrow1.y);
       final int[] arrow = new int[] { midPath.x, midPath.y, arrow1.x, arrow1.y, arrow2.x, arrow2.y };
       gc.fillPolygon(arrow);
@@ -517,9 +516,9 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
     /**
      * Counts redraws that occur, compared to {@link #f_tickCounter}.
      */
-    private final AtomicInteger f_redrawCounter = new AtomicInteger(0);
+    final AtomicInteger f_redrawCounter = new AtomicInteger(0);
 
-    private final Runnable f_redrawCanvasTask = new Runnable() {
+    final Runnable f_redrawCanvasTask = new Runnable() {
       @Override
       public void run() {
         if (!f_canvas.isDisposed())
@@ -598,8 +597,8 @@ public final class LockCycleGraph extends AbstractQueryResultCustomDisplay {
     double m = getSlope(c, outside);
     double b = getYIntercept(c, outside);
 
-    final int xRec = (c.x > outside.x) ? nr.x /* left */: nr.x + nr.width /* right */;
-    final int yRec = (c.y > outside.y) ? nr.y /* top */: nr.y + nr.height /* bottom */;
+    final int xRec = (c.x > outside.x) ? nr.x /* left */ : nr.x + nr.width /* right */;
+    final int yRec = (c.y > outside.y) ? nr.y /* top */ : nr.y + nr.height /* bottom */;
 
     /*
      * Check special case where x=x

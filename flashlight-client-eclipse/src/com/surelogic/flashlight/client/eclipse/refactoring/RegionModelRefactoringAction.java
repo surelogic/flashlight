@@ -33,7 +33,7 @@ public class RegionModelRefactoringAction implements IObjectActionDelegate,
 
     @Override
     public void run(final IAction action) {
-        final List<RunDirectory> preppedRuns = new ArrayList<RunDirectory>(
+        final List<RunDirectory> preppedRuns = new ArrayList<>(
                 RunManager.getInstance().getPreparedRunDirectories());
 
         final RegionRefactoringInfo info = new RegionRefactoringInfo(

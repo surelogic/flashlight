@@ -46,9 +46,9 @@ public class RegionModelRefactoring extends Refactoring {
     @Override
     public RefactoringStatus checkFinalConditions(final IProgressMonitor pm)
             throws CoreException, OperationCanceledException {
-        targetRegions = new HashMap<String, Map<String, RecommendedRegion>>();
-        targetClassRegions = new HashMap<String, Map<String, RecommendedRegion>>();
-        targetFieldRegions = new HashMap<String, Map<String, List<RecommendedRegion>>>();
+        targetRegions = new HashMap<>();
+        targetClassRegions = new HashMap<>();
+        targetFieldRegions = new HashMap<>();
         for (final RunDirectory desc : info.getSelectedRuns()) {
             final DBConnection conn = desc.getDB();
             try {
@@ -64,12 +64,12 @@ public class RegionModelRefactoring extends Refactoring {
                     Map<String, List<RecommendedRegion>> map = targetFieldRegions
                             .get(r.getPackage());
                     if (map == null) {
-                        map = new HashMap<String, List<RecommendedRegion>>();
+                        map = new HashMap<>();
                         targetFieldRegions.put(r.getPackage(), map);
                     }
                     List<RecommendedRegion> list = map.get(r.getClazz());
                     if (list == null) {
-                        list = new ArrayList<RecommendedRegion>();
+                        list = new ArrayList<>();
                         map.put(r.getClazz(), list);
                     }
                     list.add(r);
@@ -97,7 +97,7 @@ public class RegionModelRefactoring extends Refactoring {
             Map<String, RecommendedRegion> packageRegion = regions.get(r
                     .getPackage());
             if (packageRegion == null) {
-                packageRegion = new HashMap<String, RecommendedRegion>();
+                packageRegion = new HashMap<>();
                 regions.put(r.getPackage(), packageRegion);
             }
             final RecommendedRegion clazzRegion = packageRegion.get(r

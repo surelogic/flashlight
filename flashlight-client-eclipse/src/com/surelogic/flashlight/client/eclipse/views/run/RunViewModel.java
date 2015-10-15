@@ -130,7 +130,7 @@ public final class RunViewModel {
     }
   }
 
-  private final List<ColumnDataAdaptor> f_columnData = new ArrayList<ColumnDataAdaptor>();
+  private final List<ColumnDataAdaptor> f_columnData = new ArrayList<>();
 
   public RunViewModel() {
     f_columnData.add(new ColumnDataAdaptor() {

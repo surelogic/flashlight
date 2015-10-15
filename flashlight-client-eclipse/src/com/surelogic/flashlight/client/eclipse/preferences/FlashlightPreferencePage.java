@@ -26,7 +26,7 @@ import com.surelogic.common.ui.preferences.AbstractCommonPreferencePage;
 import com.surelogic.flashlight.client.eclipse.views.adhoc.FlashlightDataSource;
 
 public class FlashlightPreferencePage extends AbstractCommonPreferencePage {
-    private final List<FieldEditor> f_editors = new ArrayList<FieldEditor>();
+    private final List<FieldEditor> f_editors = new ArrayList<>();
     private BooleanFieldEditor f_autoIncreaseHeap;
     private IntegerFieldEditor f_maxRowsPerQuery;
     private BooleanFieldEditor f_promptAboutLotsOfSavedQueries;

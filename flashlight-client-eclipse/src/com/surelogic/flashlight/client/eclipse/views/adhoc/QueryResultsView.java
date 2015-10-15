@@ -221,8 +221,8 @@ public final class QueryResultsView extends AbstractQueryResultsView {
 
   private void setupNewsItems(@NonNull final RunDirectory run, @NonNull final Composite goodNews, @NonNull final Composite badNews) {
     List<AdHocQuery> topLevelQueries = getManager().getRootQueryList();
-    final ArrayList<NewsItem> goodNewsList = new ArrayList<NewsItem>();
-    final ArrayList<NewsItem> badNewsList = new ArrayList<NewsItem>();
+    final ArrayList<NewsItem> goodNewsList = new ArrayList<>();
+    final ArrayList<NewsItem> badNewsList = new ArrayList<>();
     for (final AdHocQuery query : topLevelQueries) {
       final boolean queryIsEmpty = EmptyQueriesCache.getInstance().queryResultWillBeEmpty(run, query);
 

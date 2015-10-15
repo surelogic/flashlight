@@ -26,7 +26,7 @@ import com.surelogic.common.ui.preferences.LabeledScaleFieldEditor;
 public class FlashlightInstrumentationWidgets {
     private final DialogPage f_page;
     private final IPreferenceStore f_preferences;
-    private final List<FieldEditor> f_editors = new ArrayList<FieldEditor>();
+    private final List<FieldEditor> f_editors = new ArrayList<>();
 
     private final IntegerFieldEditor f_consolePort;
     private final ScaleFieldEditor f_outQSize;

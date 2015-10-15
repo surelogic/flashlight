@@ -80,7 +80,7 @@ public class RunSelectionPage extends UserInputWizardPage {
     }
 
     void validate() {
-        final List<RunDirectory> selected = new ArrayList<RunDirectory>();
+        final List<RunDirectory> selected = new ArrayList<>();
         for (final TableItem item : f_runTable.getItems()) {
             if (item.getChecked()) {
                 selected.add((RunDirectory) item.getData());
@@ -97,7 +97,7 @@ public class RunSelectionPage extends UserInputWizardPage {
             if (!project.equals(selected)) {
                 f_runTable.removeAll();
                 selected = project;
-                final List<RunDirectory> runList = new ArrayList<RunDirectory>(
+                final List<RunDirectory> runList = new ArrayList<>(
                         f_info.getRuns());
                 Collections.sort(runList, new Comparator<RunDirectory>() {
                     @Override

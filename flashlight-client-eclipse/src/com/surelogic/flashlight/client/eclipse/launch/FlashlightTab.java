@@ -46,18 +46,10 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
             FlashlightPreferencesUtility.REFINERY_SIZE, };
 
     // For use with field editors
-    private final Collection<FieldEditor> f_editors = new ArrayList<FieldEditor>();
-    private final IPreferenceStore prefs = new PreferenceStore();
-    private final IPropertyChangeListener prefsListener = new IPropertyChangeListener() {
-        @Override
-        public void propertyChange(final PropertyChangeEvent event) {
-            System.out.println(event.getProperty() + " => "
-                    + event.getNewValue());
-            setDirty(true);
-        }
-    };
-    private FieldEditor[] refineryControls;
-    private Group advanced;
+    final Collection<FieldEditor> f_editors = new ArrayList<>();
+    final IPreferenceStore prefs = new PreferenceStore();
+    FieldEditor[] refineryControls;
+    Group advanced;
 
     @Override
     public void createControl(final Composite parent) {
@@ -84,7 +76,7 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
 
         f_editors.addAll(widgets.getEditors());
 
-        ArrayList<FieldEditor> refineryEditors = new ArrayList<FieldEditor>();
+        ArrayList<FieldEditor> refineryEditors = new ArrayList<>();
         for (final FieldEditor e : f_editors) {
             for (String attr : RefineryAttrs) {
                 if (attr.equals(e.getPreferenceName())) {
@@ -214,7 +206,7 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
         copyFromPrefStore(config, prefs);
     }
 
-    private void copyPrefsFromDefaults() {
+    void copyPrefsFromDefaults() {
         final IPreferenceStore defaults = EclipseUIUtility.getPreferences();
         for (String attr : StringAttrs) {
             prefs.setValue(attr, defaults.getString(attr));
@@ -257,7 +249,7 @@ public class FlashlightTab extends AbstractLaunchConfigurationTab {
         }
     }
 
-    private void setChanged() {
+    void setChanged() {
         setDirty(true);
         updateLaunchConfigurationDialog();
     }

@@ -39,7 +39,7 @@ public final class LaunchHelper {
         private final boolean useSpy;
         private final boolean useRefinery;
 
-        private RuntimeConfig(final ILaunchConfiguration launch)
+        RuntimeConfig(final ILaunchConfiguration launch)
                 throws CoreException {
             IPreferenceStore prefs = EclipseUIUtility.getPreferences();
             rawQSize = launch.getAttribute(
@@ -118,7 +118,7 @@ public final class LaunchHelper {
          * way we make sure the handling of the directories doesn't overwrite
          * the instrumented jar file.
          */
-        final List<String> toInstrument = new ArrayList<String>();
+        final List<String> toInstrument = new ArrayList<>();
         final StringBuilder sb = new StringBuilder();
         for (final String potentialParent : allInstrument) {
             final String test = potentialParent + File.separator;

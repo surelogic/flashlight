@@ -68,7 +68,7 @@ public final class LaunchUtils {
         }
     }
 
-    private static abstract class Adder<T> {
+    static abstract class Adder<T> {
         public final void add(List<T> list, IRuntimeClasspathEntry entry) {
             list.add(convertEntry(entry));
         }
@@ -102,7 +102,7 @@ public final class LaunchUtils {
 
     public static List<String> convertToLocations(
             final List<IRuntimeClasspathEntry> input) {
-        final List<String> locations = new ArrayList<String>(input.size());
+        final List<String> locations = new ArrayList<>(input.size());
         for (final IRuntimeClasspathEntry entry : input) {
             locations.add(entry.getLocation());
         }
@@ -110,7 +110,7 @@ public final class LaunchUtils {
     }
 
     public static List<String> convertToLocations(final Object[] input) {
-        final List<String> locations = new ArrayList<String>(input.length);
+        final List<String> locations = new ArrayList<>(input.length);
         for (final Object entry : input) {
             locations.add(((IRuntimeClasspathEntry) entry).getLocation());
         }

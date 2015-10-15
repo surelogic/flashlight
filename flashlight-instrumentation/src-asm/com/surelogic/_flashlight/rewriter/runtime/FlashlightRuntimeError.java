@@ -10,6 +10,8 @@ package com.surelogic._flashlight.rewriter.runtime;
  * {@link ClassNotFoundException} or {@link NoSuchFieldException}.
  */
 public class FlashlightRuntimeError extends Error {
+  private static final long serialVersionUID = 6389458522397989756L;
+
   public FlashlightRuntimeError(final String msg) {
     super(msg);
   }

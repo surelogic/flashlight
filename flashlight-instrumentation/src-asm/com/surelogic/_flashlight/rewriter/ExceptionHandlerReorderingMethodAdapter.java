@@ -76,7 +76,7 @@ import org.objectweb.asm.TypeReference;
  * the list of exceptions.
  */
 final class ExceptionHandlerReorderingMethodAdapter extends MethodVisitor {
-	private static final String[] OPCODES = new String[] { "NOP",
+	static final String[] OPCODES = new String[] { "NOP",
 			"ACONST_NULL", "ICONST_M1", "ICONST_0", "ICONST_1", "ICONST_2",
 			"ICONST_3", "ICONST_4", "ICONST_5", "LCONST_0", "LCONST_1",
 			"FCONST_0", "FCONST_1", "FCONST_2", "DCONST_0", "DCONST_1",

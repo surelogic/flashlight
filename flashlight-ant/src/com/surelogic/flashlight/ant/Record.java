@@ -288,7 +288,7 @@ public class Record extends Task {
     if (bootclasspath != null) {
       i.createBootclasspath().add(bootclasspath);
     }
-    i.setFieldsFile(new File(runFolder, InstrumentationConstants.FL_FIELDS_FILE_LOC));
+    i.setFields(new File(runFolder, InstrumentationConstants.FL_FIELDS_FILE_LOC));
     i.setClassHierarchyFile(new File(runFolder, InstrumentationConstants.FL_CLASS_HIERARCHY_FILE_LOC));
     i.setLogFile(new File(runFolder, InstrumentationConstants.FL_LOG_FILE_LOC));
     i.setSitesFile(new File(runFolder, InstrumentationConstants.FL_SITES_FILE_LOC));

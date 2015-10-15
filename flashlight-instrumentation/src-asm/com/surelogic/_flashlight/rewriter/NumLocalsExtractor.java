@@ -20,7 +20,7 @@ import org.objectweb.asm.TypePath;
  * allocated for each method.
  */
 final class NumLocalsExtractor extends ClassVisitor {
-	private final Map<String, Integer> method2numLocals = new HashMap<String, Integer>();
+	final Map<String, Integer> method2numLocals = new HashMap<String, Integer>();
 
 	public NumLocalsExtractor() {
 		super(Opcodes.ASM5);

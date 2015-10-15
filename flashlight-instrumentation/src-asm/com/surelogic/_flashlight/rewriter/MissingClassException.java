@@ -1,6 +1,7 @@
 package com.surelogic._flashlight.rewriter;
 
 public final class MissingClassException extends RuntimeException {
+  private static final long serialVersionUID = -925680547247310103L;
   private String missingClassName;
   private MissingClassReference record;
   

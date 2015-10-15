@@ -51,6 +51,7 @@ public abstract class IdPhantomReference extends PhantomReference {
     this(referent, q, IdObject.getNewId());
   }
 
+  @SuppressWarnings("unchecked")
   protected IdPhantomReference(final Object referent, final ReferenceQueue q, final long id) {
     super(referent, q);
     f_id = id == Phantom.NO_PREASSIGNED_ID ? IdObject.getNewId() : id;

@@ -19,6 +19,7 @@ public class TestObservedField extends TestCase {
    * {@link ObservedField#getInstance(Field, BlockingQueue)} uses
    * {@link BlockingQueue#put(Object)} which can block.
    */
+  @SuppressWarnings("unused")
   private static final BlockingQueue<List<Event>> Q = new ArrayBlockingQueue<List<Event>>(4);
 
   static final PostMortemStore.State state = new PostMortemStore.State();

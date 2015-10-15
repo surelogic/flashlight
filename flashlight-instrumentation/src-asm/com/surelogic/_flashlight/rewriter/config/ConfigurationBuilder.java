@@ -17,12 +17,12 @@ public final class ConfigurationBuilder {
   
   private boolean indirectUseDefault;
   private List<File> indirectAdditionalMethods;
-  
+
   private boolean rewriteInvokeinterface;
   private boolean rewriteInvokespecial;
   private boolean rewriteInvokestatic;
   private boolean rewriteInvokevirtual;
-  
+
   private boolean rewritePutfield;
   private boolean rewriteGetfield;
 
@@ -48,23 +48,23 @@ public final class ConfigurationBuilder {
   private boolean instrumentAfterTryLock;
   private boolean instrumentAfterUnlock;
   private boolean instrumentIndirectAccess;
-  
+
   private String storeClassName;
 
   private Set<String> classBlacklist;
-  
+
   private FieldFilter fieldFilter;
   private Set<String> filterPackages;
 
   private LaunchType launchType;
-  
+
   /**
    * Initialize the configuration base on the system default values.
    */
   public ConfigurationBuilder() {
     this.storeClassName = Configuration.STORE_CLASS_NAME_DEFAULT;
     this.indirectUseDefault = Configuration.INDIRECT_ACCESS_USE_DEFAULT_DEFAULT;
-    this.indirectAdditionalMethods = new ArrayList(Configuration.INDIRECT_ACCESS_ADDITIONAL_DEFAULT);
+    this.indirectAdditionalMethods = new ArrayList<File>(Configuration.INDIRECT_ACCESS_ADDITIONAL_DEFAULT);
     this.rewriteInvokeinterface = Configuration.REWRITE_INVOKEINTERFACE_DEFAULT;
     this.rewriteInvokespecial = Configuration.REWRITE_INVOKESPECIAL_DEFAULT;
     this.rewriteInvokestatic = Configuration.REWRITE_INVOKESTATIC_DEFAULT;
@@ -89,32 +89,32 @@ public final class ConfigurationBuilder {
     this.instrumentAfterTryLock = Configuration.INSTRUMENT_AFTER_TRYLOCK_DEFAULT;
     this.instrumentAfterUnlock = Configuration.INSTRUMENT_AFTER_UNLOCK_DEFAULT;
     this.instrumentIndirectAccess = Configuration.INSTRUMENT_INDIRECT_ACCESS_DEFAULT;
-    this.classBlacklist = new HashSet(Configuration.BLACKLISTED_CLASSES_DEFAULT);
+    this.classBlacklist = new HashSet<String>(Configuration.BLACKLISTED_CLASSES_DEFAULT);
     this.fieldFilter = Configuration.FILTER_FIELDS_DEFAULT;
-    this.filterPackages = new HashSet(Configuration.FILTER_FIELDS_IN_PACKAGES_DEFAULT);
+    this.filterPackages = new HashSet<String>(Configuration.FILTER_FIELDS_IN_PACKAGES_DEFAULT);
   }
-  
+
   /**
-   * Initialize the configuration based on property values in the given
-   * property dictionary.
+   * Initialize the configuration based on property values in the given property
+   * dictionary.
    */
   public ConfigurationBuilder(final Properties props) {
     indirectUseDefault = getBoolean(props, Configuration.INDIRECT_ACCESS_USE_DEFAULT_PROPERTY, TRUE);
-    
+
     final String propValue = props.getProperty(Configuration.INDIRECT_ACCESS_ADDITIONAL_PROPERTY);
     if (propValue == null) {
       indirectAdditionalMethods = new ArrayList<File>(Configuration.INDIRECT_ACCESS_ADDITIONAL_DEFAULT);
     } else {
       indirectAdditionalMethods = getFileList(propValue);
     }
-    
+
     final String rewriteDefault = props.getProperty(Configuration.REWRITE_DEFAULT_PROPERTY, TRUE);
-    
+
     rewriteInvokeinterface = getBoolean(props, Configuration.REWRITE_INVOKEINTERFACE_PROPERTY, rewriteDefault);
     rewriteInvokespecial = getBoolean(props, Configuration.REWRITE_INVOKESPECIAL_PROPERTY, rewriteDefault);
     rewriteInvokestatic = getBoolean(props, Configuration.REWRITE_INVOKESTATIC_PROPERTY, rewriteDefault);
     rewriteInvokevirtual = getBoolean(props, Configuration.REWRITE_INVOKEVIRTUAL_PROPERTY, rewriteDefault);
-    
+
     rewritePutfield = getBoolean(props, Configuration.REWRITE_PUTFIELD_PROPERTY, rewriteDefault);
     rewriteGetfield = getBoolean(props, Configuration.REWRITE_GETFIELD_PROPERTY, rewriteDefault);
 
@@ -142,7 +142,7 @@ public final class ConfigurationBuilder {
     instrumentAfterTryLock = getBoolean(props, Configuration.INSTRUMENT_AFTER_TRYLOCK_PROPERTY, instrumentDefault);
     instrumentAfterUnlock = getBoolean(props, Configuration.INSTRUMENT_AFTER_UNLOCK_PROPERTY, instrumentDefault);
     instrumentIndirectAccess = getBoolean(props, Configuration.INSTRUMENT_INDIRECT_ACCESS_PROPERTY, instrumentDefault);
-    
+
     storeClassName = props.getProperty(Configuration.STORE_CLASS_NAME_PROPERTY, Configuration.STORE_CLASS_NAME_DEFAULT);
 
     final String propValue2 = props.getProperty(Configuration.BLACKLISTED_CLASSES_PROPERTY);
@@ -151,12 +151,11 @@ public final class ConfigurationBuilder {
     } else {
       classBlacklist = getStringSet(propValue2);
     }
-    
-    final String filterSetting = props.getProperty(
-        Configuration.FILTER_FIELDS_PROPERTY,
+
+    final String filterSetting = props.getProperty(Configuration.FILTER_FIELDS_PROPERTY,
         Configuration.FILTER_FIELDS_DEFAULT.name());
     fieldFilter = Enum.valueOf(FieldFilter.class, filterSetting.toUpperCase());
-    
+
     final String propValue3 = props.getProperty(Configuration.FILTER_FIELDS_IN_PACKAGES_PROPERTY);
     if (fieldFilter == FieldFilter.NONE || propValue3 == null) {
       fieldFilter = FieldFilter.NONE;
@@ -165,9 +164,8 @@ public final class ConfigurationBuilder {
       filterPackages = getStringSet(propValue3);
     }
   }
-  
-  private static boolean getBoolean(final Properties props,
-      final String propName, final String defaultValue) {
+
+  private static boolean getBoolean(final Properties props, final String propName, final String defaultValue) {
     return Boolean.valueOf(props.getProperty(propName, defaultValue));
   }
 
@@ -188,111 +186,103 @@ public final class ConfigurationBuilder {
     }
     return strings;
   }
-  
+
   private String flattenFileList(List<File> files) {
-	  StringBuilder sb = new StringBuilder();
-	  for(File f : files) {
-		  if (sb.length() > 0) {
-			  sb.append(',');
-		  }
-		  sb.append(f.getAbsolutePath());
-	  }
-	  return sb.toString();
+    StringBuilder sb = new StringBuilder();
+    for (File f : files) {
+      if (sb.length() > 0) {
+        sb.append(',');
+      }
+      sb.append(f.getAbsolutePath());
+    }
+    return sb.toString();
   }
-  
+
   private String flattenStringSet(Set<String> strings) {
-	  StringBuilder sb = new StringBuilder();
-	  for(String s : strings) {
-		  if (sb.length() > 0) {
-			  sb.append(',');
-		  }
-		  sb.append(s);
-	  }
-	  return sb.toString();
+    StringBuilder sb = new StringBuilder();
+    for (String s : strings) {
+      if (sb.length() > 0) {
+        sb.append(',');
+      }
+      sb.append(s);
+    }
+    return sb.toString();
   }
-  
-  private static void setBoolean(final Properties props,
-	      final String propName, final boolean value) {
-	  props.getProperty(propName, value ? TRUE : FALSE);
+
+  private static void setBoolean(final Properties props, final String propName, final boolean value) {
+    props.getProperty(propName, value ? TRUE : FALSE);
   }
-  
+
   /**
    * Create a Properties object based on the current settings
    */
   public Properties getProperties() {
-	  final Properties props = new Properties();
-	  setBoolean(props, Configuration.INDIRECT_ACCESS_USE_DEFAULT_PROPERTY, indirectUseDefault);
-      props.setProperty(Configuration.INDIRECT_ACCESS_ADDITIONAL_PROPERTY, flattenFileList(indirectAdditionalMethods));
+    final Properties props = new Properties();
+    setBoolean(props, Configuration.INDIRECT_ACCESS_USE_DEFAULT_PROPERTY, indirectUseDefault);
+    props.setProperty(Configuration.INDIRECT_ACCESS_ADDITIONAL_PROPERTY, flattenFileList(indirectAdditionalMethods));
 
-	  setBoolean(props, Configuration.REWRITE_INVOKEINTERFACE_PROPERTY, rewriteInvokeinterface);
-	  setBoolean(props, Configuration.REWRITE_INVOKESPECIAL_PROPERTY, rewriteInvokespecial);
-	  setBoolean(props, Configuration.REWRITE_INVOKESTATIC_PROPERTY, rewriteInvokestatic);
-	  setBoolean(props, Configuration.REWRITE_INVOKEVIRTUAL_PROPERTY, rewriteInvokevirtual);
+    setBoolean(props, Configuration.REWRITE_INVOKEINTERFACE_PROPERTY, rewriteInvokeinterface);
+    setBoolean(props, Configuration.REWRITE_INVOKESPECIAL_PROPERTY, rewriteInvokespecial);
+    setBoolean(props, Configuration.REWRITE_INVOKESTATIC_PROPERTY, rewriteInvokestatic);
+    setBoolean(props, Configuration.REWRITE_INVOKEVIRTUAL_PROPERTY, rewriteInvokevirtual);
 
-	  setBoolean(props, Configuration.REWRITE_PUTFIELD_PROPERTY, rewritePutfield);
-	  setBoolean(props, Configuration.REWRITE_GETFIELD_PROPERTY, rewriteGetfield);
+    setBoolean(props, Configuration.REWRITE_PUTFIELD_PROPERTY, rewritePutfield);
+    setBoolean(props, Configuration.REWRITE_GETFIELD_PROPERTY, rewriteGetfield);
 
-	  setBoolean(props, Configuration.REWRITE_PUTSTATIC_PROPERTY, rewritePutstatic);
-	  setBoolean(props, Configuration.REWRITE_GETSTATIC_PROPERTY, rewriteGetstatic);
+    setBoolean(props, Configuration.REWRITE_PUTSTATIC_PROPERTY, rewritePutstatic);
+    setBoolean(props, Configuration.REWRITE_GETSTATIC_PROPERTY, rewriteGetstatic);
 
-	  setBoolean(props, Configuration.REWRITE_ARRAY_LOAD_PROPERTY, rewriteArrayLoad);
-	  setBoolean(props, Configuration.REWRITE_ARRAY_STORE_PROPERTY, rewriteArrayStore);
+    setBoolean(props, Configuration.REWRITE_ARRAY_LOAD_PROPERTY, rewriteArrayLoad);
+    setBoolean(props, Configuration.REWRITE_ARRAY_STORE_PROPERTY, rewriteArrayStore);
 
-	  setBoolean(props, Configuration.REWRITE_SYNCHRONIZED_METHOD_PROPERTY, rewriteSynchronizedMethod);
-	  setBoolean(props, Configuration.REWRITE_MONITORENTER_PROPERTY, rewriteMonitorenter);
-	  setBoolean(props, Configuration.REWRITE_MONITOREXIT_PROPERTY, rewriteMonitorexit);
+    setBoolean(props, Configuration.REWRITE_SYNCHRONIZED_METHOD_PROPERTY, rewriteSynchronizedMethod);
+    setBoolean(props, Configuration.REWRITE_MONITORENTER_PROPERTY, rewriteMonitorenter);
+    setBoolean(props, Configuration.REWRITE_MONITOREXIT_PROPERTY, rewriteMonitorexit);
 
-	  setBoolean(props, Configuration.REWRITE_INIT_PROPERTY, rewriteInit);
-	  setBoolean(props, Configuration.REWRITE_CONSTRUCTOR_EXECUTION_PROPERTY, rewriteConstructorExecution);
+    setBoolean(props, Configuration.REWRITE_INIT_PROPERTY, rewriteInit);
+    setBoolean(props, Configuration.REWRITE_CONSTRUCTOR_EXECUTION_PROPERTY, rewriteConstructorExecution);
 
-	  setBoolean(props, Configuration.INSTRUMENT_BEFORE_CALL_PROPERTY, instrumentBeforeCall);
-	  setBoolean(props, Configuration.INSTRUMENT_AFTER_CALL_PROPERTY, instrumentAfterCall);
-	  setBoolean(props, Configuration.INSTRUMENT_BEFORE_WAIT_PROPERTY, instrumentBeforeWait);
-	  setBoolean(props, Configuration.INSTRUMENT_AFTER_WAIT_PROPERTY, instrumentAfterWait);
-	  setBoolean(props, Configuration.INSTRUMENT_BEFORE_JUC_LOCK_PROPERTY, instrumentBeforeJUCLock);
-	  setBoolean(props, Configuration.INSTRUMENT_AFTER_LOCK_PROPERTY, instrumentAfterLock);
-	  setBoolean(props, Configuration.INSTRUMENT_AFTER_TRYLOCK_PROPERTY, instrumentAfterTryLock);
-	  setBoolean(props, Configuration.INSTRUMENT_AFTER_UNLOCK_PROPERTY, instrumentAfterUnlock);
-	  setBoolean(props, Configuration.INSTRUMENT_INDIRECT_ACCESS_PROPERTY, instrumentIndirectAccess);
+    setBoolean(props, Configuration.INSTRUMENT_BEFORE_CALL_PROPERTY, instrumentBeforeCall);
+    setBoolean(props, Configuration.INSTRUMENT_AFTER_CALL_PROPERTY, instrumentAfterCall);
+    setBoolean(props, Configuration.INSTRUMENT_BEFORE_WAIT_PROPERTY, instrumentBeforeWait);
+    setBoolean(props, Configuration.INSTRUMENT_AFTER_WAIT_PROPERTY, instrumentAfterWait);
+    setBoolean(props, Configuration.INSTRUMENT_BEFORE_JUC_LOCK_PROPERTY, instrumentBeforeJUCLock);
+    setBoolean(props, Configuration.INSTRUMENT_AFTER_LOCK_PROPERTY, instrumentAfterLock);
+    setBoolean(props, Configuration.INSTRUMENT_AFTER_TRYLOCK_PROPERTY, instrumentAfterTryLock);
+    setBoolean(props, Configuration.INSTRUMENT_AFTER_UNLOCK_PROPERTY, instrumentAfterUnlock);
+    setBoolean(props, Configuration.INSTRUMENT_INDIRECT_ACCESS_PROPERTY, instrumentIndirectAccess);
 
-	  props.setProperty(Configuration.STORE_CLASS_NAME_PROPERTY, storeClassName);
+    props.setProperty(Configuration.STORE_CLASS_NAME_PROPERTY, storeClassName);
 
-	  props.setProperty(Configuration.BLACKLISTED_CLASSES_PROPERTY, flattenStringSet(classBlacklist));
+    props.setProperty(Configuration.BLACKLISTED_CLASSES_PROPERTY, flattenStringSet(classBlacklist));
 
-	  props.setProperty(Configuration.FILTER_FIELDS_PROPERTY, fieldFilter.name());
+    props.setProperty(Configuration.FILTER_FIELDS_PROPERTY, fieldFilter.name());
 
-	  props.setProperty(Configuration.FILTER_FIELDS_IN_PACKAGES_PROPERTY, flattenStringSet(filterPackages));
-	  return props;
+    props.setProperty(Configuration.FILTER_FIELDS_IN_PACKAGES_PROPERTY, flattenStringSet(filterPackages));
+    return props;
   }
 
   public Configuration getConfiguration() {
-    return new Configuration(storeClassName, indirectUseDefault,
-        indirectAdditionalMethods, rewriteInvokeinterface,
-        rewriteInvokespecial, rewriteInvokestatic, rewriteInvokevirtual,
-        rewritePutfield, rewriteGetfield, rewriteArrayLoad, rewriteArrayStore,
-        rewritePutstatic, rewriteGetstatic,
-        rewriteSynchronizedMethod, rewriteMonitorenter, rewriteMonitorexit,
-        rewriteInit, rewriteConstructorExecution, instrumentBeforeCall,
-        instrumentAfterCall, instrumentBeforeWait, instrumentAfterWait,
-        instrumentBeforeJUCLock, instrumentAfterLock, instrumentAfterTryLock,
-        instrumentAfterUnlock, instrumentIndirectAccess, classBlacklist,
-        fieldFilter, filterPackages, launchType);
+    return new Configuration(storeClassName, indirectUseDefault, indirectAdditionalMethods, rewriteInvokeinterface,
+        rewriteInvokespecial, rewriteInvokestatic, rewriteInvokevirtual, rewritePutfield, rewriteGetfield, rewriteArrayLoad,
+        rewriteArrayStore, rewritePutstatic, rewriteGetstatic, rewriteSynchronizedMethod, rewriteMonitorenter, rewriteMonitorexit,
+        rewriteInit, rewriteConstructorExecution, instrumentBeforeCall, instrumentAfterCall, instrumentBeforeWait,
+        instrumentAfterWait, instrumentBeforeJUCLock, instrumentAfterLock, instrumentAfterTryLock, instrumentAfterUnlock,
+        instrumentIndirectAccess, classBlacklist, fieldFilter, filterPackages, launchType);
   }
-
-  
 
   public void setIndirectUseDefault(final boolean indirectUseDefault) {
     this.indirectUseDefault = indirectUseDefault;
   }
 
   public void setIndirectAdditionalMethods(final List<File> indirectAdditionalMethods) {
-    this.indirectAdditionalMethods = new ArrayList(indirectAdditionalMethods);
+    this.indirectAdditionalMethods = new ArrayList<File>(indirectAdditionalMethods);
   }
-  
+
   public List<File> getIndirectAdditionalMethods() {
     return this.indirectAdditionalMethods;
   }
-  
+
   public void addAdditionalMethods(final File file) {
     this.indirectAdditionalMethods.add(file);
   }
@@ -332,11 +322,11 @@ public final class ConfigurationBuilder {
   public void setRewriteArrayLoad(final boolean flag) {
     this.rewriteArrayLoad = flag;
   }
-  
+
   public void setRewriteArrayStore(final boolean flag) {
     this.rewriteArrayStore = flag;
   }
-  
+
   public void setRewriteSynchronizedMethod(final boolean rewriteSynchronizedMethod) {
     this.rewriteSynchronizedMethod = rewriteSynchronizedMethod;
   }
@@ -396,32 +386,32 @@ public final class ConfigurationBuilder {
   public void setStoreClassName(final String storeClassName) {
     this.storeClassName = storeClassName;
   }
-  
+
   public Set<String> getClassBlacklist() {
     return this.classBlacklist;
   }
-  
+
   public void setClassBlacklist(final Set<String> blacklist) {
     this.classBlacklist = new HashSet<String>(blacklist);
   }
-  
+
   public void addToBlacklist(final String internalClassName) {
     this.classBlacklist.add(internalClassName);
   }
-  
+
   public void setFieldFilter(final FieldFilter value) {
     fieldFilter = value;
   }
-  
+
   public Set<String> getFilterPackages() {
     return filterPackages;
   }
-  
+
   public void addToFilterPackages(final String pack) {
     filterPackages.add(pack);
   }
-  
+
   public void setLaunchType(LaunchType t) {
-	launchType = t;
+    launchType = t;
   }
 }

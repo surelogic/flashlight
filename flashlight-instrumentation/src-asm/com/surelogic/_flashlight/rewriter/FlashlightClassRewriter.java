@@ -48,59 +48,59 @@ final class FlashlightClassRewriter extends ClassVisitor {
      * Methods that end up larger than this after instrumentation are not
      * instrumented at all.
      */
-    private static final int MAX_CODE_SIZE = 64 * 1024;
+    static final int MAX_CODE_SIZE = 64 * 1024;
 
     /** Properties to control rewriting and instrumentation. */
-    private final Configuration config;
+    final Configuration config;
 
     /** The happens before method information */
-    private final HappensBeforeTable happensBefore;
+    final HappensBeforeTable happensBefore;
 
     /** Messenger for status reports. */
-    private final RewriteMessenger messenger;
+    final RewriteMessenger messenger;
 
     /** Is the current class file an interface? */
-    private boolean isInterface;
+    boolean isInterface;
 
     /** The name of the source file that contains the class being rewritten. */
-    private String sourceFileName = UNKNOWN_SOURCE_FILE;
+    String sourceFileName = UNKNOWN_SOURCE_FILE;
 
     /** The internal name of the class being rewritten. */
-    private String classNameInternal;
+    String classNameInternal;
 
     /** The fully qualified name of the class being rewritten. */
-    private String classNameFullyQualified;
+    String classNameFullyQualified;
 
     /** The internal name of the superclass of the class being rewritten. */
-    private String superClassInternal;
+    String superClassInternal;
 
     /**
      * Do we need to add a class initializer? If the class already had one, we
      * modify it. Otherwise we need to add one.
      */
-    private boolean needsClassInitializer = true;
+    boolean needsClassInitializer = true;
 
     /**
      * Do we need to implement the IIdObject interface? This is set by the
      * {@link #visit} method.
      */
-    private boolean mustImplementIIdObject = false;
+    boolean mustImplementIIdObject = false;
 
     /**
      * Do we need to fix the serialization "read" methods?
      */
-    private boolean mustFixReadObject = false;
+    boolean mustFixReadObject = false;
 
     /**
      * Does the original class implementation have a readObject method?
      */
-    private boolean hasReadObjectMethod = false;
+    boolean hasReadObjectMethod = false;
 
     /**
      * The wrapper methods that we need to generate to instrument calls to
      * instance methods.
      */
-    private final Set<MethodCallWrapper> wrapperMethods = new TreeSet<MethodCallWrapper>(
+    final Set<MethodCallWrapper> wrapperMethods = new TreeSet<MethodCallWrapper>(
             MethodCallWrapper.comparator);
 
     /**
@@ -108,44 +108,44 @@ final class FlashlightClassRewriter extends ClassVisitor {
      * the class has been visited to find overly long methods. The key is the
      * method name + method description.
      */
-    private final Map<MethodIdentifier, CodeSizeEvaluator> methodSizes = new HashMap<MethodIdentifier, CodeSizeEvaluator>();
+    final Map<MethodIdentifier, CodeSizeEvaluator> methodSizes = new HashMap<MethodIdentifier, CodeSizeEvaluator>();
 
     /**
      * The set of methods that should not be rewritten.
      */
-    private final Set<MethodIdentifier> methodsToIgnore;
+    final Set<MethodIdentifier> methodsToIgnore;
 
     /**
      * After the entire class has been visited this contains the names of all
      * the methods that are oversized after instrumentation.
      */
-    private final Set<MethodIdentifier> oversizedMethods = new HashSet<MethodIdentifier>();
+    final Set<MethodIdentifier> oversizedMethods = new HashSet<MethodIdentifier>();
 
     /**
      * The class and field model built during the first pass. This is used to
      * obtain unique field identifiers. For a field that does not have a unique
      * identifier in this model, we must use reflection at runtime.
      */
-    private final ClassAndFieldModel classModel;
+    final ClassAndFieldModel classModel;
 
     /**
      * The set of methods that indirectly access aggregated state.
      */
-    private final IndirectAccessMethods accessMethods;
+    final IndirectAccessMethods accessMethods;
 
     /** Factory for unique call site identifiers */
-    private final SiteIdFactory callSiteIdFactory;
+    final SiteIdFactory callSiteIdFactory;
 
     /**
      * Mapping from (name + desc) to maxLocals. The orignal number of local
      * variables for each method in the class.
      */
-    private final Map<String, Integer> method2numLocals;
+    final Map<String, Integer> method2numLocals;
 
     /**
      * Did we output the special Flashlight attribute yet?
      */
-    private boolean wroteFlashlightAttribute = false;
+    boolean wroteFlashlightAttribute = false;
 
     /**
      * Create a new class rewriter.

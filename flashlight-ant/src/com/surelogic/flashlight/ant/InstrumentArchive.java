@@ -332,7 +332,7 @@ public class InstrumentArchive extends Task {
 
     File fieldsFile = new File(classDir, InstrumentationConstants.FL_FIELDS_RESOURCE);
     fieldsFile.getParentFile().mkdirs();
-    i.setFieldsFile(fieldsFile);
+    i.setFields(fieldsFile);
 
     File chFile = new File(classDir, InstrumentationConstants.FL_CLASS_HIERARCHY_RESOURCE);
     chFile.getParentFile().mkdirs();

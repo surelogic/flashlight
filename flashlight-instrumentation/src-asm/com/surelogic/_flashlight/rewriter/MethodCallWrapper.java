@@ -31,8 +31,8 @@ abstract class MethodCallWrapper extends MethodCall {
   protected final String wrapperName;
   protected final String wrapperDescriptor;
   
-  private final String identityString;
-  private final int hashCode;
+  final String identityString;
+  final int hashCode;
   
   protected final Type[] originalArgTypes;
   protected final int[] wrapperArgsToLocals;

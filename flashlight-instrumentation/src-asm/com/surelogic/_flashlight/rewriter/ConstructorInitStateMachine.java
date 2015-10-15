@@ -99,7 +99,7 @@ final class ConstructorInitStateMachine extends MethodVisitor {
 		if (branchMap.containsKey(label)) {
 			return;
 		}
-		branchMap.put(label, new ArrayList(stackFrame));
+		branchMap.put(label, new ArrayList<AbstractObjects>(stackFrame));
 	}
 
 	// ==========================================================================

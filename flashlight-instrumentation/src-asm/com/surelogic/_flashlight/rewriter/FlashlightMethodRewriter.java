@@ -151,7 +151,7 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
      * we can refer to the actual type of the delegated visitor:
      * {@link ExceptionHandlerReorderingMethodAdapter}.
      */
-    private final ExceptionHandlerReorderingMethodAdapter mv;
+    final ExceptionHandlerReorderingMethodAdapter mv;
 
     /**
      * The current instruction from the MethodNode model of the method.
@@ -160,56 +160,56 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
      * <code>null</code> unless we ran out of instructions, which should only
      * happen at the end of the method.
      */
-    private AbstractInsnNode currentInsn;
+    AbstractInsnNode currentInsn;
 
     /** Configuration information, derived from properties. */
-    private final Configuration config;
+    final Configuration config;
 
     /** The happens-before method data base */
-    private final HappensBeforeTable happensBefore;
+    final HappensBeforeTable happensBefore;
 
     /** Messenger for reporting status */
-    private final RewriteMessenger messenger;
+    final RewriteMessenger messenger;
 
     /** Is the current classfile an interface? */
-    private final boolean inInterface;
+    final boolean inInterface;
 
     /** The internal name of the class being rewritten. */
-    private final String classBeingAnalyzedInternal;
+    final String classBeingAnalyzedInternal;
 
     /**
      * The internal package name of the class being rewritten. Derived from
      * {@link #classBeingAnalyzedInternal}, but cached as a separate field so we
      * don't have to recomputed it for every field access.
      */
-    private final String packageNameInternal;
+    final String packageNameInternal;
 
     /** The internal name of the superclass of the class being rewritten. */
-    private final String superClassInternal;
+    final String superClassInternal;
 
     /** The simple name of the method being rewritten. */
-    private final String methodName;
+    final String methodName;
 
     /** The descriptor of the method being rewritten. */
-    private final String methodDesc;
+    final String methodDesc;
 
     /** Are we visiting a constructor? */
-    private final boolean isConstructor;
+    final boolean isConstructor;
 
     /** Are we visiting the class initializer method? */
-    private final boolean isClassInitializer;
+    final boolean isClassInitializer;
 
     /** Are we the method readObject(java.io.ObjectInputStream)? */
-    private final boolean isReadObject;
+    final boolean isReadObject;
 
     /** Are we the method readObjectNoData()? */
-    private final boolean isReadObjectNoData;
+    final boolean isReadObjectNoData;
 
     /** Was the method originally synchronized? */
-    private final boolean wasSynchronized;
+    final boolean wasSynchronized;
 
     /** Is the method static? */
-    private final boolean isStatic;
+    final boolean isStatic;
 
     /**
      * Must the class that contains the method implement the IIdObject
@@ -237,8 +237,8 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
      * get pushed on the stack between the time stamp and the method return
      * value. So it needs to be stored and retrieved when needed.
      */
-    private final int targetTimeStampVariableIndex;
-    private final int sourceTimeStampVariableIndex;
+    final int targetTimeStampVariableIndex;
+    final int sourceTimeStampVariableIndex;
     
 //    /**
 //     * Index of the local variable that holds the reference to the connecting
@@ -254,45 +254,45 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
      * Site index of the start of the method body for happens-before call-in
      * method. If we don't care about this, it is -1. Set my {@link #visitCode}.
      */
-    private long happensBeforeSiteIndex = -1L;
+    long happensBeforeSiteIndex = -1L;
 
     /**
      * The current source line of code being rewritten. Driven by calls to
      * {@link #visitLineNumber}. This is {@code -1} when no line number
      * information is available.
      */
-    private int currentSrcLine = -1;
+    int currentSrcLine = -1;
 
     /**
      * The global list of wrapper methods that need to be created. This list is
      * added to by this class, and is provided by the FlashlightClassRewriter
      * instance that create the method rewriter.
      */
-    private final Set<MethodCallWrapper> wrapperMethods;
+    final Set<MethodCallWrapper> wrapperMethods;
 
     /**
      * Label for marking the start of the exception handler used when rewriting
      * class initializers, constructors and synchronized methods.
      */
-    private Label startOfExceptionHandler = null;
+    Label startOfExceptionHandler = null;
 
     /**
      * Label for marking the start of the exception handler used for wrapping
      * all constructors/methods with stack-trace building entry/exit calls.
      */
-    private Label startOfExecutionExceptionHandler = null;
+    Label startOfExecutionExceptionHandler = null;
 
     /**
      * The siteId used for marking the execution of this method. Passed to
      * {@link Store#methodExecution}.
      */
-    private long executionSiteId;
+    long executionSiteId;
 
     /**
      * Label for marking the end of the current try-finally block when rewriting
      * synchronized methods.
      */
-    private Label endOfTryBlock = null;
+    Label endOfTryBlock = null;
 
     /**
      * If {@link #isConstructor} is <code>true</code>, this is initialized to a
@@ -300,12 +300,12 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
      * detected; see {@link ObjectInitCallback}. This field is nulled once the
      * call has been detected.
      */
-    private ConstructorInitStateMachine stateMachine = null;
+    ConstructorInitStateMachine stateMachine = null;
 
     /**
      * The class hierarchy and field model used to get unique field identifiers.
      */
-    private final ClassAndFieldModel classModel;
+    final ClassAndFieldModel classModel;
 
     /**
      * Refers to a thunk used to insert instructions after the following
@@ -314,26 +314,26 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
      * {@link #delayForLabel(com.surelogic._flashlight.rewriter.FlashlightMethodRewriter.DelayedOutput)}
      * . Once the thunk has been executed, this is reset to null} .
      */
-    private DelayedOutput delayedForLabel = null;
+    DelayedOutput delayedForLabel = null;
 
     /**
      * The instruction node of the previous instruction if it was an ASTORE
      * instruction. Otherwise this is <code>null</code>.
      */
-    private VarInsnNode previousStoreInsn = null;
+    VarInsnNode previousStoreInsn = null;
 
     /**
      * The instruction node of the previous instruction if it was an ALOAD
      * instruction. Otherwise this is <code>null</code>.
      */
-    private VarInsnNode previousLoadInsn = null;
+    VarInsnNode previousLoadInsn = null;
 
     /**
      * When rewriting a synchronized method to use explicit locking, this holds
      * the id of the local variable that stores the lock object. Otherwise, it
      * is -1} .
      */
-    private int syncMethodLockVariable = -1;
+    int syncMethodLockVariable = -1;
 
     /**
      * Map from one label to another. The key label is a label we receive as a
@@ -351,17 +351,17 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
      * the try block, and insert the original label after our instrumentation
      * code.
      */
-    private final Map<Label, Label> tryLabelMap = new HashMap<Label, Label>();
+    final Map<Label, Label> tryLabelMap = new HashMap<Label, Label>();
 
     /**
      * Factory for creating unique site identifiers.
      */
-    private final SiteIdFactory siteIdFactory;
+    final SiteIdFactory siteIdFactory;
 
     /**
      * The current site identifier
      */
-    private long siteId = 0;
+    long siteId = 0;
 
     /**
      * The owner of the last "&lt;init&gt;" method called. Used by the object
@@ -370,17 +370,17 @@ final class FlashlightMethodRewriter extends MethodVisitor implements
      * the field is not initialized because we have a "this(...)" call, which
      * would have already initialized the field.
      */
-    private String lastInitOwner = null;
+    String lastInitOwner = null;
 
     /**
      * The index of the next new local variable to allocate.
      */
-    private int nextNewLocal = -1;
+    int nextNewLocal = -1;
 
     /**
      * The set of methods that indirectly access shared state.
      */
-    private final IndirectAccessMethods accessMethods;
+    final IndirectAccessMethods accessMethods;
 
     /**
      * Factory method for generating a new instance. We need this so we can

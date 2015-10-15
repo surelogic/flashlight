@@ -20,6 +20,8 @@ import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Task;
 import org.apache.tools.ant.types.Path;
 
+import com.surelogic.NonNull;
+import com.surelogic.Nullable;
 import com.surelogic._flashlight.common.InstrumentationConstants;
 import com.surelogic._flashlight.rewriter.ClassNameUtil;
 import com.surelogic._flashlight.rewriter.InstrumentationFileTranslator;
@@ -30,6 +32,7 @@ import com.surelogic._flashlight.rewriter.config.Configuration;
 import com.surelogic._flashlight.rewriter.config.Configuration.FieldFilter;
 import com.surelogic._flashlight.rewriter.config.ConfigurationBuilder;
 import com.surelogic.common.FileUtility;
+import com.surelogic.common.i18n.I18N;
 
 /**
  * Ant task for rewriting classes to apply flashlight instrumentation. Rewrites
@@ -80,26 +83,42 @@ public final class Instrument extends Task {
    */
   boolean infoPropertiesAsClass = false;
 
+  /*
+   * The odd use of File below is to ensure that the full path is sent into the
+   * instrumentation. It assumes a lot about the file references that it is
+   * passed. Making sure the File object contains path information all the way
+   * to the root of the drive seems to ensure correct behaviour.
+   */
+
   /**
    * The pathname of the fields database file to create.
    */
-  File fieldsFileName = null;
+  @NonNull
+  File fields = new File((new File("fl-fields.txt")).getAbsolutePath());
 
   /**
    * The pathname of the class hierarchy database file to create.
    */
-  File classHierarchyFileName = null;
+  @NonNull
+  File classHierarchy = new File((new File("fl-classHierarchy.txt")).getAbsolutePath());
 
   /**
    * The pathname of the call site database file to create.
    */
-  File sitesFileName = null;
+  @NonNull
+  File sites = new File((new File("fl-sites.txt")).getAbsolutePath());
 
-  /** The pathname of the log file to generated. */
-  File logFileName = null;
+  /**
+   * The pathname of the log file to generated.
+   */
+  @NonNull
+  File log = new File((new File("fl-instrumentation-log.txt")).getAbsolutePath());
 
-  /** The pathname to a happens before configuration file, may be null. */
-  File hbFile = null;
+  /**
+   * The pathname to a happens before configuration file, may be null.
+   */
+  @Nullable
+  File hb = null;
 
   /**
    * The boot class path for the instrumented application. If this is not set,
@@ -685,36 +704,60 @@ public final class Instrument extends Task {
 
   /**
    * Set the path of the field identifiers database file to create.
+   * 
+   * @param file
+   *          a file
    */
-  public void setFieldsFile(final File fileName) {
-    fieldsFileName = fileName;
+  public void setFields(@NonNull File file) {
+    if (file == null)
+      throw new IllegalArgumentException(I18N.err(44, "file"));
+    fields = file;
   }
 
-  public void setHappensBeforeFile(final File fileName) {
-    hbFile = fileName;
+  /**
+   * Sets the happens before file TODO what is this doing?
+   * 
+   * @param file
+   *          a file
+   */
+  public void setHappensBeforeFile(@Nullable File file) {
+    hb = file;
   }
 
   /**
    * Set the path of the class hierarchy database file to create.
+   * 
+   * @param file
+   *          a file
    */
-  public void setClassHierarchyFile(final File fileName) {
-    classHierarchyFileName = fileName;
+  public void setClassHierarchyFile(@NonNull File file) {
+    if (file == null)
+      throw new IllegalArgumentException(I18N.err(44, "file"));
+    classHierarchy = file;
   }
 
   /**
    * Set the path of the call site identifiers database file to create.
    *
-   * @param fileName
+   * @param file
+   *          a file
    */
-  public void setSitesFile(final File fileName) {
-    sitesFileName = fileName;
+  public void setSitesFile(@NonNull File file) {
+    if (file == null)
+      throw new IllegalArgumentException(I18N.err(44, "file"));
+    sites = file;
   }
 
   /**
    * Set the path of the log file to create.
+   * 
+   * @param file
+   *          a file
    */
-  public void setLogFile(final File fileName) {
-    logFileName = fileName;
+  public void setLogFile(@NonNull File file) {
+    if (file == null)
+      throw new IllegalArgumentException(I18N.err(44, "file"));
+    log = file;
   }
 
   /**
@@ -1004,37 +1047,6 @@ public final class Instrument extends Task {
   }
 
   private void checkParameters() throws BuildException {
-    if (jarName == null) {
-      if (fieldsFileName == null) {
-        throw new BuildException("No file name specified for the fields database");
-      }
-      if (classHierarchyFileName == null) {
-        throw new BuildException("No file name specified for the class hierarchy database");
-      }
-      if (sitesFileName == null) {
-        throw new BuildException("No file name specified for the sites database");
-      }
-      if (logFileName == null) {
-        throw new BuildException("No file name specified for the log file");
-      }
-      if (infoProperties != null) {
-        throw new BuildException("The infoProperties attribute may only be specified alongside the infoJar attribute.");
-      }
-
-    } else {
-      if (fieldsFileName != null) {
-        throw new BuildException("File name specified for the fields database when jar name is also specified.");
-      }
-      if (classHierarchyFileName != null) {
-        throw new BuildException("File name specified for the class hierarchy database when jar name is also specified.");
-      }
-      if (sitesFileName != null) {
-        throw new BuildException("File name specified for the sites database when jar name is also specified.");
-      }
-      if (logFileName != null) {
-        throw new BuildException("File name specified for the log file when jar name is also specified.");
-      }
-    }
     if (bootclasspath == null) {
       // get the boot classpath from the runtime system
       log("Getting the boot class path from the runtime system", Project.MSG_VERBOSE);
@@ -1102,22 +1114,23 @@ public final class Instrument extends Task {
    */
   @Override
   public void execute() throws BuildException {
+    System.out.println("Instrumentation in progress...");
     checkParameters();
     File tmpJar = null;
     if (jarName != null) {
       try {
         tmpJar = File.createTempFile("flashlight", "jar");
         tmpJar.delete();
-        fieldsFileName = new File(tmpJar, InstrumentationConstants.FL_FIELDS_RESOURCE);
-        fieldsFileName.getParentFile().mkdirs();
+        fields = new File(tmpJar, InstrumentationConstants.FL_FIELDS_RESOURCE);
+        fields.getParentFile().mkdirs();
 
-        classHierarchyFileName = new File(tmpJar, InstrumentationConstants.FL_CLASS_HIERARCHY_RESOURCE);
-        classHierarchyFileName.getParentFile().mkdirs();
+        classHierarchy = new File(tmpJar, InstrumentationConstants.FL_CLASS_HIERARCHY_RESOURCE);
+        classHierarchy.getParentFile().mkdirs();
 
-        sitesFileName = new File(tmpJar, InstrumentationConstants.FL_SITES_RESOURCE);
-        sitesFileName.getParentFile().mkdirs();
-        logFileName = new File(tmpJar, InstrumentationConstants.FL_LOG_RESOURCE);
-        logFileName.getParentFile().mkdirs();
+        sites = new File(tmpJar, InstrumentationConstants.FL_SITES_RESOURCE);
+        sites.getParentFile().mkdirs();
+        log = new File(tmpJar, InstrumentationConstants.FL_LOG_RESOURCE);
+        log.getParentFile().mkdirs();
         if (infoProperties != null) {
           if (infoPropertiesAsClass) {
             File infoClassDest = new File(tmpJar, InstrumentationConstants.FL_PROPERTIES_CLASS);
@@ -1154,6 +1167,12 @@ public final class Instrument extends Task {
       log(INDENT + p, Project.MSG_VERBOSE);
     }
 
+    System.out.println("fields         = " + fields.getAbsolutePath());
+    System.out.println("sites          = " + sites.getAbsolutePath());
+    System.out.println("log            = " + log.getAbsolutePath());
+    System.out.println("classHierarchy = " + classHierarchy.getAbsolutePath());
+    System.out.println("hb             = " + (hb != null ? hb.getAbsolutePath() : "null"));
+
     // Add the method files to the configuration
     for (final String p : methodFiles.list()) {
       configBuilder.addAdditionalMethods(new File(p));
@@ -1163,10 +1182,9 @@ public final class Instrument extends Task {
     // final AntLogMessenger messenger = new AntLogMessenger();
     PrintWriter logOut = null;
     try {
-      logOut = new PrintWriter(logFileName);
+      logOut = new PrintWriter(log);
       final RewriteMessenger messenger = new PrintWriterMessenger(logOut);
-      final RewriteManager manager = new AntRewriteManager(config, messenger, fieldsFileName, sitesFileName,
-          classHierarchyFileName);
+      final RewriteManager manager = new AntRewriteManager(config, messenger, fields, sites, classHierarchy);
 
       for (final String p : bootclasspath.list()) {
         manager.addClasspathJar(new File(p));
@@ -1240,7 +1258,7 @@ public final class Instrument extends Task {
         log(sb.toString(), Project.MSG_ERR);
       }
     } catch (final FileNotFoundException e) {
-      final String msg = "Unable to create instrumentation log file " + logFileName;
+      final String msg = "Unable to create instrumentation log file " + log;
       log(msg, Project.MSG_ERR);
       throw new BuildException(msg, e, getLocation());
     } finally {
@@ -1251,8 +1269,8 @@ public final class Instrument extends Task {
     if (jarName != null) {
       // Store site info as a class
       try {
-        InstrumentationFileTranslator.writeSites(sitesFileName, new File(tmpJar, InstrumentationConstants.FL_SITES_CLASS));
-        InstrumentationFileTranslator.writeFields(fieldsFileName, new File(tmpJar, InstrumentationConstants.FL_FIELDS_CLASS));
+        InstrumentationFileTranslator.writeSites(sites, new File(tmpJar, InstrumentationConstants.FL_SITES_CLASS));
+        InstrumentationFileTranslator.writeFields(fields, new File(tmpJar, InstrumentationConstants.FL_FIELDS_CLASS));
       } catch (IOException e) {
         throw new BuildException(e);
       }
@@ -1326,7 +1344,7 @@ public final class Instrument extends Task {
 
   final class AntRewriteManager extends RewriteManager {
     public AntRewriteManager(final Configuration c, final RewriteMessenger m, final File ff, final File sf, final File chf) {
-      super(c, m, ff, sf, chf, hbFile);
+      super(c, m, ff, sf, chf, hb);
     }
 
     @Override

@@ -23,9 +23,9 @@ import com.surelogic.flashlight.common.model.RunDirectory;
 public final class PopulateBrowserWithRunInformationJob extends Job {
 
   @NonNull
-  private final RunDirectory f_runDirectory;
+  final RunDirectory f_runDirectory;
 
-  private final Browser f_browser;
+  final Browser f_browser;
 
   public PopulateBrowserWithRunInformationJob(final RunDirectory runDirectory, final Browser browser) {
     super("Obtain run description HTML overview");
@@ -58,10 +58,8 @@ public final class PopulateBrowserWithRunInformationJob extends Job {
       job.schedule();
     } catch (MalformedURLException e) {
       final int code = 210;
-      return SLEclipseStatusUtility.createErrorStatus(
-          code,
-          I18N.err(code, f_runDirectory.getDescription().getName(),
-              SLUtility.toStringDayHMS(f_runDirectory.getDescription().getStartTimeOfRun())), e);
+      return SLEclipseStatusUtility.createErrorStatus(code, I18N.err(code, f_runDirectory.getDescription().getName(),
+          SLUtility.toStringDayHMS(f_runDirectory.getDescription().getStartTimeOfRun())), e);
     } finally {
       monitor.done();
     }

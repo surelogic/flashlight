@@ -4,7 +4,7 @@
 
 This Ant task can instrument a JAR or WAR to produce Flashlight results
 when the JAR or WAR is run. After the program is run, the output is a
-directory thatt can be loaded into Eclipse to examine its results.
+directory that can be loaded into Eclipse to examine its results.
 
 Requirements: Ant 1.7 (or higher) running on a Java 7 (or higher) JRE
 
@@ -92,5 +92,12 @@ like 'Server-2015.10.16-at-14.50.01.644'. Each run you make will have a differen
 time and date. Once the run is loaded you will have to manually prepare
 the run for querying. To do this select the loaded run in the Flashlight Runs view
 and choose "Prepare" from the context menu (or double-click on the run).
+
+The Flashlight runtime JAR must be before the instrumented JAR in your classpath
+In the example Ant script and command line java command above the
+flashlight-runtime.jar is placed ahead of flserver.jar in the program's classpath.
+This is required, and the program will fail to execute if it is not done. Any
+other JARS your project needs may come in the usual order. It is a good idea
+to always put the flashlight-runtime.jar first.
 
 #

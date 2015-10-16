@@ -1059,12 +1059,6 @@ public final class Instrument extends Task {
       log(INDENT + p, Project.MSG_VERBOSE);
     }
 
-    System.out.println("fields         = " + fields.getAbsolutePath());
-    System.out.println("sites          = " + sites.getAbsolutePath());
-    System.out.println("log            = " + log.getAbsolutePath());
-    System.out.println("classHierarchy = " + classHierarchy.getAbsolutePath());
-    System.out.println("hb             = " + (hb != null ? hb.getAbsolutePath() : "null"));
-
     // Add the method files to the configuration
     for (final String p : methodFiles.list()) {
       configBuilder.addAdditionalMethods(new File(p));

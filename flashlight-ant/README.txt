@@ -14,7 +14,7 @@ is located within).
 
 -- Reference --
 
-The "flashlight-instrument-archive" tasj takes a JAR or WAR as input
+The "flashlight-instrument-archive" task takes a JAR or WAR as input
 and outputs an instrumented JAR or WAR.
 
 Attributes added by flashlight-instrument-archive task are:

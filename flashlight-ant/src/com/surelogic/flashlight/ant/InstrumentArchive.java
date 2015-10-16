@@ -35,14 +35,15 @@ public class InstrumentArchive extends Task {
   private static final String WEBINF = "WEB-INF";
   private static final String CLASSES = "classes";
   private static final String LIB = "lib";
-  private final Instrument i;
+
+  private final Instrument i = new Instrument();
 
   private String runName;
   private File destFile, srcFile, runtime, dataDir, properties;
 
   private String collectionType;
 
-  private final List<String> toIgnore;
+  private final ArrayList<String> toIgnore = new ArrayList<>();
 
   public static final class Ignore {
     String jar;
@@ -64,11 +65,6 @@ public class InstrumentArchive extends Task {
       this.jars = jars;
     }
 
-  }
-
-  public InstrumentArchive() {
-    i = new Instrument();
-    toIgnore = new ArrayList<String>();
   }
 
   public void setProperties(final File props) {
@@ -256,7 +252,7 @@ public class InstrumentArchive extends Task {
    * @param dest
    * @throws IOException
    */
-  private void instrumentStandardJar(final File src, final File dest) throws IOException {
+  void instrumentStandardJar(final File src, final File dest) throws IOException {
     dest.mkdir();
     i.setProject(getProject());
 
@@ -278,7 +274,7 @@ public class InstrumentArchive extends Task {
    *
    * @throws IOException
    */
-  private void instrumentWar(final File src, final File dest) throws IOException {
+  void instrumentWar(final File src, final File dest) throws IOException {
 
     final File webInfSrc = new File(src, WEBINF);
     final File webInfDest = new File(dest, WEBINF);
@@ -328,7 +324,7 @@ public class InstrumentArchive extends Task {
    * @param classDir
    * @throws IOException
    */
-  private void setupFlashlightConf(final File classDir) throws IOException {
+  void setupFlashlightConf(final File classDir) throws IOException {
 
     File fieldsFile = new File(classDir, InstrumentationConstants.FL_FIELDS_RESOURCE);
     fieldsFile.getParentFile().mkdirs();
@@ -400,7 +396,7 @@ public class InstrumentArchive extends Task {
     }
   }
 
-  private File getDestDir() {
+  File getDestDir() {
     final String name = destFile.getName();
     if (name.endsWith(".jar") || name.endsWith(".war")) {
       log("Using tmp directory for archive");
@@ -415,7 +411,7 @@ public class InstrumentArchive extends Task {
      */
   }
 
-  private File getSrcDir() {
+  File getSrcDir() {
     if (!srcFile.exists()) {
       throw new BuildException(String.format("The source '%s' must be a valid archive file or directory.", srcFile));
     }
@@ -439,7 +435,7 @@ public class InstrumentArchive extends Task {
     return tmpSrc;
   }
 
-  final List<File> dirs = new ArrayList<File>();
+  final List<File> dirs = new ArrayList<>();
 
   void cleanUp() {
     for (File f : dirs) {

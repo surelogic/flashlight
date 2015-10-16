@@ -62,7 +62,7 @@ public class Record extends Task {
 
   public Record() {
     super();
-    inspects = new ArrayList<Inspect>();
+    inspects = new ArrayList<>();
     i = new Instrument();
     j = new CommandlineJava();
   }
@@ -385,6 +385,7 @@ public class Record extends Task {
       log("\t" + c);
     }
     final ProcessBuilder pb = new ProcessBuilder(cmd);
+    System.out.println(j.toString());
     pb.redirectErrorStream(true);
     try {
       final Process p = pb.start();

@@ -22,6 +22,7 @@ public class ImportFlashlightRunAction implements IWorkbenchWindowActionDelegate
   public void run(final IAction action) {
     Shell shell = EclipseUIUtility.getShell();
     DirectoryDialog dd = new DirectoryDialog(shell);
+    dd.setText(I18N.msg("flashlight.dialog.importRun.title"));
     String fileName = dd.open();
     if (fileName != null) {
       File f = new File(fileName);

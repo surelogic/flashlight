@@ -34,8 +34,6 @@ import com.surelogic.common.jobs.AbstractSLJob;
 import com.surelogic.common.jobs.SLProgressMonitor;
 import com.surelogic.common.jobs.SLStatus;
 import com.surelogic.common.jobs.SubSLProgressMonitor;
-import com.surelogic.common.license.SLLicenseProduct;
-import com.surelogic.common.license.SLLicenseUtility;
 import com.surelogic.common.logging.SLLogger;
 import com.surelogic.flashlight.common.model.FlashlightFileUtility;
 import com.surelogic.flashlight.common.model.RunDescription;
@@ -160,15 +158,6 @@ public final class PrepSLJob extends AbstractSLJob {
 
     monitor.begin(PRE_SCAN_WORK + DROP_CONSTRAINT_WORK + PERSIST_RUN_DESCRIPTION_WORK + SETUP_WORK + PREP_WORK * 2 + FLUSH_WORK
         + EACH_POST_PREP * postPrepWork.length + ADD_CONSTRAINT_WORK);
-
-    /*
-     * License check
-     */
-    final SLLicenseProduct product = f_runDirectory.isAndroid() ? SLLicenseProduct.FLASHLIGHT_ANDROID : SLLicenseProduct.FLASHLIGHT;
-    final SLStatus failed = SLLicenseUtility.validateSLJob(product, monitor);
-    if (failed != null) {
-      return failed;
-    }
 
     File firstFile = f_dataFiles.get(0);
 
